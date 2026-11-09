@@ -50,6 +50,7 @@ fun MeScreen(
     onVault: () -> Unit,
     onMediaLibrary: () -> Unit,
     onMusic: () -> Unit,
+    onStatus: () -> Unit,
     onBrowser: () -> Unit,
     onAbout: () -> Unit
 ) {
@@ -66,6 +67,7 @@ fun MeScreen(
         MeRow(R.drawable.ic_nav_library, "Vault", "private, passcode-locked", onVault)
         MeRow(R.drawable.ic_folder, "Media library", "video & audio on this device", onMediaLibrary)
         MeRow(R.drawable.ic_nav_shorts, "Music", "play your audio library", onMusic)
+        MeRow(R.drawable.ic_folder, "Status saver", "save WhatsApp statuses", onStatus)
         MeRow(R.drawable.ic_history, "History & Likes", "what you've watched", onHistory)
         MeRow(R.drawable.ic_nav_home, "Browser", "browse & sniff media", onBrowser)
         MeRow(R.drawable.ic_settings, "Settings", "theme, format, instances", onSettings)
