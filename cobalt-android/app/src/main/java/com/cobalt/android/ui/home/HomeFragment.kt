@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.navigation.fragment.findNavController
 import com.cobalt.android.databinding.FragmentHomeBinding
 import com.cobalt.android.link.LinkResolverRepository
 import com.cobalt.android.ui.downloads.PlaylistDownloadDialog
@@ -65,6 +66,17 @@ class HomeFragment : Fragment() {
         // Phase 6: show the resolution picker once a link resolves.
         // childFragmentManager (not parentFragmentManager) so the sheet's
         // lifecycle is tied to this fragment, not the hosting activity.
+        // H5: a submitted channel URL opens the channel screen.
+        viewModel.channelUrl.observe(viewLifecycleOwner) { url ->
+            if (!url.isNullOrBlank()) {
+                viewModel.onChannelOpened()
+                findNavController().navigate(
+                    com.cobalt.android.R.id.nav_channel,
+                    Bundle().apply { putString("channel_url", url) }
+                )
+            }
+        }
+
         viewModel.resolveResult.observe(viewLifecycleOwner) { result ->
             if (result is LinkResolverRepository.ResolveResult.Success &&
                 childFragmentManager.findFragmentByTag(ResolutionPickerDialog.TAG) == null

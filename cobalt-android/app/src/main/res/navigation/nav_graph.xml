@@ -47,6 +47,12 @@
         tools:layout="@layout/fragment_media_library" />
 
     <fragment
+        android:id="@+id/nav_channel"
+        android:name="com.cobalt.android.ui.channel.ChannelFragment"
+        android:label="@string/channel_title"
+        tools:layout="@layout/fragment_channel" />
+
+    <fragment
         android:id="@+id/nav_status"
         android:name="com.cobalt.android.status.StatusFragment"
         android:label="@string/status_title"

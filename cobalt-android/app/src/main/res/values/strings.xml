@@ -94,6 +94,7 @@
     <string name="action_pip">Picture in picture</string>
     <string name="action_equalizer">Equalizer</string>
     <string name="action_tracks">Quality and subtitles</string>
+    <string name="channel_title">Channel</string>
     <string name="status_title">Status saver</string>
     <string name="music_title">Music</string>
     <string name="widget_title">Cobalt downloads</string>

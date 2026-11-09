@@ -175,6 +175,13 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private val _resolveResult = MutableLiveData<LinkResolverRepository.ResolveResult?>(null)
     val resolveResult: LiveData<LinkResolverRepository.ResolveResult?> = _resolveResult
 
+    /** Set when the submitted link is a YouTube channel, so the host can open
+     * the channel screen (H5) instead of the resolve → download flow. */
+    private val _channelUrl = MutableLiveData<String?>(null)
+    val channelUrl: LiveData<String?> = _channelUrl
+
+    fun onChannelOpened() { _channelUrl.value = null }
+
     fun setPendingUrl(url: String) {
         _linkInput.value = url
     }
@@ -193,6 +200,12 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         }
         if (!isPlausibleUrl(url)) {
             _statusMessage.value = "That doesn't look like a valid link."
+            return
+        }
+        // A channel URL has no single downloadable video — it is a browse
+        // surface, so it opens the channel screen (H5) rather than resolving.
+        if (com.cobalt.android.feed.channel.ChannelRepository.isChannelUrl(url)) {
+            _channelUrl.value = url
             return
         }
         if (_isResolving.value == true) return
