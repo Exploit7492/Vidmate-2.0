@@ -96,6 +96,9 @@ dependencies {
     implementation("androidx.media3:media3-exoplayer-hls:1.4.1")
     implementation("androidx.media3:media3-exoplayer-dash:1.4.1")
     implementation("androidx.media3:media3-ui:1.4.1")
+    // MediaSession routes headset/Bluetooth transport buttons and the system
+    // media notification to the player (Phase C6).
+    implementation("androidx.media3:media3-session:1.4.1")
     // NewPipeExtractor is one of the three merged Shorts sources (the other
     // two — direct Innertube calls and Invidious public instances — use
     // OkHttp directly and need no extra dependency). NewPipeExtractor needs a

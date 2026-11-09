@@ -93,6 +93,8 @@
     <string name="action_playback_speed">Playback speed</string>
     <string name="action_pip">Picture in picture</string>
     <string name="action_equalizer">Equalizer</string>
+    <string name="action_tracks">Quality and subtitles</string>
+    <string name="media_library_title">Media library</string>
     <string name="vault_title">Vault</string>
     <string name="browser_title">Browser</string>
     <string name="browser_back">Back</string>

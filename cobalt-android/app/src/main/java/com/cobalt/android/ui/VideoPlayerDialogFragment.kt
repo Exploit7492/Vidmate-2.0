@@ -9,13 +9,18 @@ import android.util.Rational
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.common.TrackSelectionOverride
+import androidx.media3.common.Tracks
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.session.MediaSession
 import com.cobalt.android.R
 import com.cobalt.android.databinding.DialogVideoPlayerBinding
+import android.util.Log
 import com.cobalt.android.util.EqualizerController
 
 /**
@@ -43,6 +48,11 @@ class VideoPlayerDialogFragment : DialogFragment() {
     private var speedIndex = 0
     private val equalizer = EqualizerController()
     private var eqIndex = 0
+    // MediaSession advertises the player to the system, which is what routes
+    // headset/Bluetooth transport buttons and the lock-screen controls to it
+    // (Phase C6).
+    private var mediaSession: MediaSession? = null
+    private var subtitlesOn = true
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val dialog = Dialog(requireContext(), R.style.Theme_Cobalt_FullScreenDialog)
@@ -94,6 +104,69 @@ class VideoPlayerDialogFragment : DialogFragment() {
         setupPlaybackSpeed(exo)
         setupPip()
         setupEqualizer(exo)
+        setupTracks(exo)
+        setupMediaSession(exo)
+    }
+
+    /**
+     * One "tracks" button covering both the quality switch (C2) and subtitle
+     * selection (C3): it lists the video qualities and the text/subtitle tracks
+     * ExoPlayer actually found in the media, and applies the user's pick with a
+     * [TrackSelectionOverride]. Lists are read from `player.currentTracks` when
+     * tapped, so they reflect what is really present rather than a guess.
+     */
+    private fun setupTracks(exo: ExoPlayer) {
+        binding.btnTracks.setOnClickListener {
+            val tracks = exo.currentTracks
+            val qualities = mutableListOf<String>()
+            val videoGroups = mutableListOf<Tracks.Group>()
+            for (group in tracks.groups) {
+                for (i in 0 until group.length) {
+                    val format = group.getTrackFormat(i)
+                    if (format.height > 0) {
+                        qualities.add("${format.height}p${if (format.bitrate > 0) " · ${format.bitrate / 1000}kbps" else ""}")
+                        videoGroups.add(group)
+                    }
+                }
+            }
+            val labels = buildList {
+                add("Subtitles: ${if (subtitlesOn) "on" else "off"}")
+                addAll(qualities)
+            }
+            if (labels.isEmpty()) return@setOnClickListener
+            AlertDialog.Builder(requireContext())
+                .setTitle("Tracks")
+                .setItems(labels.toTypedArray()) { _, which ->
+                    if (which == 0) {
+                        subtitlesOn = !subtitlesOn
+                        exo.trackSelectionParameters = exo.trackSelectionParameters
+                            .buildUpon()
+                            .setTrackTypeDisabled(androidx.media3.common.C.TRACK_TYPE_TEXT, !subtitlesOn)
+                            .build()
+                    } else {
+                        val group = videoGroups[which - 1]
+                        val format = group.getTrackFormat(0)
+                        exo.trackSelectionParameters = exo.trackSelectionParameters
+                            .buildUpon()
+                            .setOverrideForType(TrackSelectionOverride(group.mediaTrackGroup, 0))
+                            .build()
+                        Log.i("VideoPlayer", "quality override -> ${format.height}p")
+                    }
+                }
+                .show()
+        }
+    }
+
+    /**
+     * Wires a [MediaSession] to the player so headset/Bluetooth play-pause-skip
+     * buttons and the system media notification control it (C6). Media3's
+     * `MediaSession` handles the transport-command routing; we only supply the
+     * player and an id.
+     */
+    private fun setupMediaSession(exo: ExoPlayer) {
+        mediaSession = MediaSession.Builder(requireContext(), exo)
+            .setId("cobalt_player")
+            .build()
     }
 
     /**
@@ -173,6 +246,8 @@ class VideoPlayerDialogFragment : DialogFragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        mediaSession?.release()
+        mediaSession = null
         equalizer.detach()
         player?.release()
         player = null

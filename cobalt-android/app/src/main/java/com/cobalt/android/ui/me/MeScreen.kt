@@ -48,6 +48,7 @@ fun MeScreen(
     onHistory: () -> Unit,
     onSettings: () -> Unit,
     onVault: () -> Unit,
+    onMediaLibrary: () -> Unit,
     onBrowser: () -> Unit,
     onAbout: () -> Unit
 ) {
@@ -62,6 +63,7 @@ fun MeScreen(
         Spacer(Modifier.height(12.dp))
         MeRow(R.drawable.ic_folder, "My Downloads", "saved videos & audio", onDownloads)
         MeRow(R.drawable.ic_nav_library, "Vault", "private, passcode-locked", onVault)
+        MeRow(R.drawable.ic_folder, "Media library", "video & audio on this device", onMediaLibrary)
         MeRow(R.drawable.ic_history, "History & Likes", "what you've watched", onHistory)
         MeRow(R.drawable.ic_nav_home, "Browser", "browse & sniff media", onBrowser)
         MeRow(R.drawable.ic_settings, "Settings", "theme, format, instances", onSettings)

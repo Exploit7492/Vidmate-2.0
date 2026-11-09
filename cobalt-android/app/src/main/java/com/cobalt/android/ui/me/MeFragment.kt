@@ -61,6 +61,9 @@ class MeFragment : Fragment() {
                 onVault = {
                     findNavController().navigate(R.id.nav_vault)
                 },
+                onMediaLibrary = {
+                    findNavController().navigate(R.id.nav_media_library)
+                },
                 onBrowser = {
                     findNavController().navigate(R.id.nav_browser)
                 },

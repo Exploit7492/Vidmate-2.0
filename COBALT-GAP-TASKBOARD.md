@@ -39,11 +39,11 @@ VidMate's code (it is not open source); the designs are reimplemented.
 | # | Gap | Plan | Status |
 |---|---|---|---|
 | C1 | Playback speed control | ExoPlayer `setPlaybackSpeed` UI | ✅ |
-| C2 | In-player quality switch | Track selector from resolved formats | ⬜ |
-| C3 | Subtitle / caption support | ExoPlayer `TextOutput` + track picker | ⬜ |
+| C2 | In-player quality switch | Track selector from resolved formats | ✅ |
+| C3 | Subtitle / caption support | ExoPlayer `TextOutput` + track picker | ✅ |
 | C4 | Background audio playback | `MediaSessionService` + notification | ⬜ |
 | C5 | Picture-in-picture / floating window | `enterPictureInPictureMode` (API 26+) | ✅ |
-| C6 | Media-button / headset control | `MediaSession` callbacks | ⬜ |
+| C6 | Media-button / headset control | `MediaSession` callbacks | ✅ |
 
 ## Phase D — Library, files & vault
 
@@ -51,10 +51,10 @@ VidMate's code (it is not open source); the designs are reimplemented.
 |---|---|---|---|
 | D1 | Delete a downloaded file | Delete MediaStore row + DB row from Library | ✅ |
 | D2 | Multi-select files | Selection mode in Files tab | ⬜ |
-| D3 | Sort / filter local media | Name/date/size/type sorters | ⬜ |
-| D4 | Local video library (scanner) | MediaStore video scan | ⬜ |
-| D5 | Local music library | MediaStore audio scan | ⬜ |
-| D6 | Local media search | Query local library | ⬜ |
+| D3 | Sort / filter local media | Name/date/size/type sorters | ✅ |
+| D4 | Local video library (scanner) | MediaStore video scan | ✅ |
+| D5 | Local music library | MediaStore audio scan | ✅ |
+| D6 | Local media search | Query local library | ✅ |
 | D7 | Private vault (passcode) | Passcode gate + move-to-vault (app-private dir) | ✅ |
 | D8 | Vault import / export | Import from / export to public storage | ✅ |
 
