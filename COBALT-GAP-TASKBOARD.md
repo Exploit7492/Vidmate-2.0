@@ -71,7 +71,7 @@ VidMate's code (it is not open source); the designs are reimplemented.
 | E7 | Extractor updatable without app update | Remote host/rule list (JSON) refreshed from remote config ✅ |
 | E8 | WhatsApp (status saver) | Status dir scan + save | ⬜ |
 | E9 | YouTube sign-in / subs / history / watch-later | Needs Google OAuth — excluded (see note) | ⬜ |
-| E10 | YouTube Music | Music tab (Phase G) | ⬜ |
+| E10 | YouTube Music | Music tab (Phase G) ✅ |
 | E11 | Comments | InnerTube comments fetch + UI | ⬜ |
 
 ## Phase F — In-app browser
@@ -90,7 +90,7 @@ VidMate's code (it is not open source); the designs are reimplemented.
 
 | # | Gap | Plan | Status |
 |---|---|---|---|
-| G1 | Music player | Audio-only Media3 player over downloaded/local audio | ⬜ |
+| G1 | Music player | Audio-only Media3 player over downloaded/local audio ✅ |
 | G2 | Lyrics | Lyric lookup + timed display | ⬜ |
 | G3 | Equalizer | `android.media.audiofx.Equalizer` | ✅ |
 | G4 | Music playlists | Local playlist entity + UI | ⬜ |

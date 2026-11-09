@@ -46,6 +46,12 @@
         android:label="@string/media_library_title"
         tools:layout="@layout/fragment_media_library" />
 
+    <fragment
+        android:id="@+id/nav_music"
+        android:name="com.cobalt.android.ui.music.MusicFragment"
+        android:label="@string/music_title"
+        tools:layout="@layout/fragment_music" />
+
     <!-- Settings is reached from the Me tab (a VidMate-style row), not the
          bottom bar, so it has no bottom-nav menu item. -->
     <fragment
