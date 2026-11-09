@@ -33,6 +33,9 @@ interface DownloadDao {
     @Query("SELECT * FROM downloads WHERE status IN ('QUEUED','DOWNLOADING','CONVERTING','FAILED_NETWORK') ORDER BY timestamp DESC")
     fun getActiveLive(): LiveData<List<DownloadRecord>>
 
+    @Query("SELECT * FROM downloads WHERE status IN ('QUEUED','DOWNLOADING','CONVERTING','FAILED_NETWORK') ORDER BY timestamp DESC")
+    suspend fun getActiveSync(): List<DownloadRecord>
+
     @Query("SELECT * FROM downloads WHERE id = :id")
     suspend fun getById(id: Long): DownloadRecord?
 

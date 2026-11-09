@@ -24,6 +24,7 @@ import com.cobalt.android.ui.DownloadQueueViewModel
 import com.cobalt.android.util.ClipboardHelper
 import com.cobalt.android.util.SettingsRepository
 import com.cobalt.android.util.UrlMatcher
+import com.cobalt.android.widget.DownloadsWidgetProvider
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.snackbar.Snackbar
 
@@ -102,6 +103,8 @@ class MainActivity : AppCompatActivity() {
             } else {
                 binding.tvBadge.visibility = View.GONE
             }
+            // Keep the home-screen widget (H7) in step with the queue.
+            DownloadsWidgetProvider.refresh(this)
         }
     }
 

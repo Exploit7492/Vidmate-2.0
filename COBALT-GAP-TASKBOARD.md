@@ -102,10 +102,10 @@ VidMate's code (it is not open source); the designs are reimplemented.
 | H1 | Splash / welcome screen | Branded splash activity ✅ |
 | H2 | Onboarding / coach screens | First-run permission + intro pages ✅ |
 | H3 | Tab set configurable server-side | Read tab config from `remote-config.json` ✅ |
-| H4 | Custom widgets (download animation, wheel, sliding tabs) | Compose equivalents | ⬜ |
+| H4 | Custom widgets (download animation, wheel, sliding tabs) | Compose equivalents | ✅ |
 | H5 | Channel pages | Channel feed screen | ⬜ |
 | H6 | Game-centre tab | Excluded — growth/monetisation surface, not a media capability | ⬜ |
-| H7 | App-widget settings + home-screen widget | `AppWidgetProvider` for downloads | ⬜ |
+| H7 | App-widget settings + home-screen widget | `AppWidgetProvider` for downloads | ✅ |
 
 ## Phase I — Platform & infrastructure
 

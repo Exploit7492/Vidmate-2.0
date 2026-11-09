@@ -95,6 +95,9 @@
     <string name="action_equalizer">Equalizer</string>
     <string name="action_tracks">Quality and subtitles</string>
     <string name="music_title">Music</string>
+    <string name="widget_title">Cobalt downloads</string>
+    <string name="widget_description">Shows your active downloads</string>
+    <string name="widget_open">Open Cobalt</string>
     <string name="splash_tagline">download anything</string>
     <string name="onboarding_title">Welcome to Cobalt</string>
     <string name="onboarding_skip">Skip</string>
