@@ -3,6 +3,13 @@
 Every ❌ from `VIDMATE-VS-COBALT-COMPARISON.md` (71 rows), grouped into build
 phases. Status: ✅ done · 🔨 in progress · ⬜ queued · 🚫 excluded (with reason).
 
+**Status (2026-11-09): every buildable row is ✅.** The only rows left open are
+the eight marked 🚫 — four genuinely external (E9 needs a Google OAuth client
+bound to the app's signing cert, I3 needs a Firebase project, I6 needs a
+keystore/Play account) and four deliberately excluded on principle (F7 runtime
+anti-detection, H6 game-centre growth surface, I4 plugin framework, I5 dynamic
+code loading). Each carries its reason in the row; see the notes at the end.
+
 Ground rule applied throughout: **build the real capability, not a stub.**
 Where VidMate's approach is the reference, the underlying engine design is used
 as the argument (segmented range download with per-part fail-over, native mux,
@@ -70,7 +77,7 @@ VidMate's code (it is not open source); the designs are reimplemented.
 | E6 | Broad extractor (hundreds of sites) | Generic host allow-list + cobalt fallback | ✅ |
 | E7 | Extractor updatable without app update | Remote host/rule list (JSON) refreshed from remote config ✅ |
 | E8 | WhatsApp (status saver) | Status dir scan + save ✅ |
-| E9 | YouTube sign-in / subs / history / watch-later | Needs Google OAuth — excluded (see note) | ⬜ |
+| E9 | YouTube sign-in / subs / history / watch-later | Needs Google OAuth — excluded (see note) | 🚫 |
 | E10 | YouTube Music | Music tab (Phase G) ✅ |
 | E11 | Comments | InnerTube comments fetch + UI ✅ |
 
@@ -84,7 +91,7 @@ VidMate's code (it is not open source); the designs are reimplemented.
 | F4 | Desktop-site toggle | UA override | ✅ |
 | F5 | Media sniffing in browser | `WebViewClient` request interception → offer download | ✅ |
 | F6 | Web-game browser | Same browser, games entry ✅ |
-| F7 | Browser anti-detection (JS hook) | UA/JS spoofing — excluded by default (see note) | ⬜ |
+| F7 | Browser anti-detection (JS hook) | UA/JS spoofing — excluded by default (see note) | 🚫 |
 
 ## Phase G — Music
 
@@ -104,7 +111,7 @@ VidMate's code (it is not open source); the designs are reimplemented.
 | H3 | Tab set configurable server-side | Read tab config from `remote-config.json` ✅ |
 | H4 | Custom widgets (download animation, wheel, sliding tabs) | Compose equivalents | ✅ |
 | H5 | Channel pages | Channel feed screen ✅ |
-| H6 | Game-centre tab | Excluded — growth/monetisation surface, not a media capability | ⬜ |
+| H6 | Game-centre tab | Excluded — growth/monetisation surface, not a media capability | 🚫 |
 | H7 | App-widget settings + home-screen widget | `AppWidgetProvider` for downloads | ✅ |
 
 ## Phase I — Platform & infrastructure
@@ -113,10 +120,10 @@ VidMate's code (it is not open source); the designs are reimplemented.
 |---|---|---|---|
 | I1 | Crash handler / auto-restart | `UncaughtExceptionHandler` + restart activity | ✅ |
 | I2 | In-app APK install (self-update) | `REQUEST_INSTALL_PACKAGES` + update check — needs a signed release channel ✅ |
-| I3 | Push (FCM + custom service) | Local notification infra built; FCM needs a Google project (see note) | ⬜ |
-| I4 | Plugin architecture (hot-swappable) | Excluded — large framework; extractor hot-update (E7) covers the real need | ⬜ |
-| I5 | Dynamic code loading / hot-fix | Excluded — Play-policy and security-hostile; E7 covers config-level updates | ⬜ |
-| I6 | Signed store release | Excluded — needs a keystore + Play/account the user owns | ⬜ |
+| I3 | Push (FCM + custom service) | Local notification infra built; FCM needs a Google project (see note) | 🚫 |
+| I4 | Plugin architecture (hot-swappable) | Excluded — large framework; extractor hot-update (E7) covers the real need | 🚫 |
+| I5 | Dynamic code loading / hot-fix | Excluded — Play-policy and security-hostile; E7 covers config-level updates | 🚫 |
+| I6 | Signed store release | Excluded — needs a keystore + Play/account the user owns | 🚫 |
 | I7 | Open source / license | Add a LICENSE | ✅ |
 
 ## Phase J — Not carried over (by design, not a gap)
