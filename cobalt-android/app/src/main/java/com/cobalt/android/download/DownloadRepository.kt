@@ -44,6 +44,9 @@ class DownloadRepository(context: Context) {
 
     suspend fun clearHistory() = dao.clearHistory()
 
+    /** Removes finished rows (complete/failed/cancelled) from history. */
+    suspend fun clearCompleted() = dao.clearCompleted()
+
     suspend fun resetStuckDownloads() {
         dao.resetStuckDownloads()
     }

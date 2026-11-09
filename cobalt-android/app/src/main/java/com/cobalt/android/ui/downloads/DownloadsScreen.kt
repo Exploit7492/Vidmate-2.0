@@ -49,6 +49,7 @@ fun DownloadsScreen(
     onRetry: (DownloadRecord) -> Unit,
     onCancel: (DownloadRecord) -> Unit,
     onPlay: (DownloadRecord) -> Unit,
+    onClear: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
@@ -60,6 +61,17 @@ fun DownloadsScreen(
                 text = { Text("active") })
             Tab(selected = selectedTab == 1, onClick = { selectedTab = 1 },
                 text = { Text("history") })
+        }
+
+        if (selectedTab == 1 && records.isNotEmpty()) {
+            Text(
+                text = "clear finished",
+                color = MaterialTheme.colorScheme.primary,
+                fontSize = 12.sp,
+                modifier = Modifier
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .clickable(onClick = onClear)
+            )
         }
 
         if (records.isEmpty()) {

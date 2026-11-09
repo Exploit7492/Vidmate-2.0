@@ -107,6 +107,9 @@
     <string name="vault_title">Vault</string>
     <string name="browser_title">Browser</string>
     <string name="browser_back">Back</string>
+    <string name="browser_tabs">Tabs</string>
+    <string name="browser_incognito">Incognito</string>
+    <string name="browser_new_tab">New tab</string>
     <string name="browser_hint">Search or enter address</string>
     <string name="browser_desktop">Desktop site</string>
     <string name="browser_download">Download from page</string>

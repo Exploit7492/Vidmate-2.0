@@ -60,7 +60,8 @@ class DownloadQueueSheet : BottomSheetDialogFragment() {
                 onPlay = { record ->
                     VideoPlayerDialogFragment.newInstance(record.mediaStoreUriString)
                         .show(parentFragmentManager, VideoPlayerDialogFragment.TAG)
-                }
+                },
+                onClear = { viewModel.clearCompleted() }
             )
         }
     }

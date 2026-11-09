@@ -15,4 +15,7 @@ class DownloadQueueViewModel(app: Application) : AndroidViewModel(app) {
     val activeDownloads: LiveData<List<DownloadRecord>> = repo.activeDownloads
 
     fun clearHistory() = viewModelScope.launch { repo.clearHistory() }
+
+    /** Wipes finished rows (complete / failed / cancelled) from history. */
+    fun clearCompleted() = viewModelScope.launch { repo.clearCompleted() }
 }

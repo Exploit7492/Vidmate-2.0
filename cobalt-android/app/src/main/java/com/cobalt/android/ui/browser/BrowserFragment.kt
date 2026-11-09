@@ -8,7 +8,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
-import android.webkit.WebSettings
+import android.webkit.CookieManager
+import android.webkit.WebStorage
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.appcompat.app.AlertDialog
@@ -17,7 +18,7 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.cobalt.android.R
 import com.cobalt.android.databinding.FragmentBrowserBinding
-import com.cobalt.android.util.UrlMatcher
+import com.google.android.material.snackbar.Snackbar
 
 /**
  * A real in-app browser (Phase F1/F4/F5).
@@ -44,6 +45,14 @@ class BrowserFragment : Fragment() {
     private val binding get() = _binding!!
     private val sniffer = MediaSniffer()
     private var desktopMode = false
+    // Multi-tab (F2): the URL of each open tab plus which is active. One
+    // WebView is reused; switching tabs saves the current URL and loads the
+    // target, which is all a downloader's browser needs (full session
+    // isolation per tab would mean a WebView each, for no user-visible gain
+    // here).
+    private val tabs = mutableListOf<String?>()
+    private var activeTab = 0
+    private var incognito = false
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -70,6 +79,8 @@ class BrowserFragment : Fragment() {
         }
         binding.btnDesktop.setOnClickListener { toggleDesktopMode() }
         binding.btnDownload.setOnClickListener { offerSniffed() }
+        binding.btnTabs.setOnClickListener { showTabs() }
+        binding.btnIncognito.setOnClickListener { toggleIncognito() }
         binding.etAddress.setOnEditorActionListener { _, _, _ ->
             val typed = binding.etAddress.text.toString().trim()
             if (typed.isNotBlank()) load(typed)
@@ -78,10 +89,80 @@ class BrowserFragment : Fragment() {
 
         // A URL handed in by the caller (e.g. "open in browser" from Home).
         val start = arguments?.getString(ARG_URL)
+        tabs.add(start)
         if (!start.isNullOrBlank()) {
             load(start)
         } else {
             binding.etAddress.setText("")
+        }
+    }
+
+    /** Tab strip as a list dialog plus a "New tab" action (F2). */
+    private fun showTabs() {
+        tabs[activeTab] = binding.webView.url
+        val labels = tabs.mapIndexed { i, url ->
+            val shown = url?.takeIf { it.isNotBlank() } ?: "(new tab)"
+            (if (i == activeTab) "• " else "  ") + shown
+        }.toMutableList()
+        labels.add(getString(R.string.browser_new_tab))
+        AlertDialog.Builder(requireContext())
+            .setTitle(R.string.browser_tabs)
+            .setItems(labels.toTypedArray()) { _, which ->
+                if (which == labels.lastIndex) {
+                    openNewTab()
+                } else {
+                    switchToTab(which)
+                }
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    private fun openNewTab() {
+        tabs[activeTab] = binding.webView.url
+        tabs.add(null)
+        activeTab = tabs.lastIndex
+        binding.etAddress.setText("")
+        binding.webView.loadUrl("about:blank")
+    }
+
+    private fun switchToTab(index: Int) {
+        if (index == activeTab || index !in tabs.indices) return
+        tabs[activeTab] = binding.webView.url
+        activeTab = index
+        val url = tabs[index]
+        if (url.isNullOrBlank()) {
+            binding.etAddress.setText("")
+            binding.webView.loadUrl("about:blank")
+        } else {
+            load(url)
+        }
+    }
+
+    /**
+     * Incognito toggle (F3). Turning it on wipes cookies, WebStorage and cache
+     * *now* so nothing from the previous session is visible, and again on exit
+     * so the incognito session itself leaves nothing behind. It does not claim
+     * to hide traffic from the network — only to not persist it locally.
+     */
+    private fun toggleIncognito() {
+        incognito = !incognito
+        binding.btnIncognito.alpha = if (incognito) 1.0f else 0.4f
+        if (incognito) wipeBrowsingData()
+        Snackbar.make(
+            binding.root,
+            if (incognito) "Incognito on — history and cookies cleared" else "Incognito off",
+            Snackbar.LENGTH_SHORT
+        ).show()
+    }
+
+    private fun wipeBrowsingData() {
+        runCatching {
+            CookieManager.getInstance().removeAllCookies(null)
+            CookieManager.getInstance().flush()
+            WebStorage.getInstance().deleteAllData()
+            binding.webView.clearHistory()
+            binding.webView.clearCache(true)
         }
     }
 
@@ -153,6 +234,7 @@ class BrowserFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        if (incognito) wipeBrowsingData()
         binding.webView.destroy()
         _binding = null
     }

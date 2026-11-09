@@ -36,8 +36,11 @@ interface DownloadDao {
     @Query("SELECT * FROM downloads WHERE id = :id")
     suspend fun getById(id: Long): DownloadRecord?
 
-    @Query("DELETE FROM downloads WHERE status = 'COMPLETE' OR status = 'FAILED'")
+    @Query("DELETE FROM downloads WHERE status = 'COMPLETE' OR status = 'FAILED' OR status = 'CANCELLED'")
     suspend fun clearHistory()
+
+    @Query("DELETE FROM downloads WHERE status IN ('COMPLETE','FAILED','FAILED_NETWORK','CANCELLED')")
+    suspend fun clearCompleted()
 
     // Phase B: the segmented engine checkpoints its part list (and the ETag it
     // is valid against) periodically, so a resume has exact offsets to work

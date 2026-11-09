@@ -79,8 +79,8 @@ VidMate's code (it is not open source); the designs are reimplemented.
 | # | Gap | Plan | Status |
 |---|---|---|---|
 | F1 | In-app browser | `WebView` screen with address bar | ✅ |
-| F2 | Multi-tab browsing | Tab model + tab strip | ⬜ |
-| F3 | Incognito mode | Ephemeral cookie store / no history | ⬜ |
+| F2 | Multi-tab browsing | Tab model + tab strip ✅ |
+| F3 | Incognito mode | Ephemeral cookie store / no history ✅ |
 | F4 | Desktop-site toggle | UA override | ✅ |
 | F5 | Media sniffing in browser | `WebViewClient` request interception → offer download | ✅ |
 | F6 | Web-game browser | Same browser, games entry | ⬜ |
