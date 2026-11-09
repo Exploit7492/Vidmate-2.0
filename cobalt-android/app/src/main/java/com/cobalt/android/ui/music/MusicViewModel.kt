@@ -28,7 +28,8 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         val currentIndex: Int = -1,
         val playing: Boolean = false,
         val loading: Boolean = true,
-        val search: String = ""
+        val search: String = "",
+        val lyrics: List<LrcParser.Line> = emptyList()
     ) {
         val current: LocalMediaItem? get() = tracks.getOrNull(currentIndex)
         val visible: List<LocalMediaItem>
@@ -53,19 +54,40 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     fun playVisible(index: Int) {
         val item = _state.value.visible.getOrNull(index) ?: return
         val realIndex = _state.value.tracks.indexOfFirst { it.uri == item.uri }
-        if (realIndex >= 0) _state.value = _state.value.copy(currentIndex = realIndex, playing = true)
+        if (realIndex >= 0) setCurrent(realIndex)
     }
 
     fun next() {
         val s = _state.value
         if (s.tracks.isEmpty()) return
-        _state.value = s.copy(currentIndex = (s.currentIndex + 1) % s.tracks.size, playing = true)
+        setCurrent((s.currentIndex + 1) % s.tracks.size)
     }
 
     fun previous() {
         val s = _state.value
         if (s.tracks.isEmpty()) return
-        _state.value = s.copy(currentIndex = (s.currentIndex - 1 + s.tracks.size) % s.tracks.size, playing = true)
+        setCurrent((s.currentIndex - 1 + s.tracks.size) % s.tracks.size)
+    }
+
+    private fun setCurrent(index: Int) {
+        _state.value = _state.value.copy(currentIndex = index, playing = true)
+        loadLyrics(_state.value.tracks.getOrNull(index)?.uri)
+    }
+
+    /**
+     * Loads a `.lrc` sidecar sitting next to a local audio file (G2). Only
+     * `file://` URIs are handled — a MediaStore `content://` URI has no stable
+     * sibling path to guess — so this silently yields no lyrics otherwise
+     * rather than pretending to fetch them.
+     */
+    private fun loadLyrics(uri: String?) {
+        val path = uri?.takeIf { it.startsWith("file://") }?.removePrefix("file://")
+        val lines = if (path == null) emptyList() else {
+            val lrc = java.io.File(path.substringBeforeLast('.') + ".lrc")
+            if (lrc.exists()) runCatching { LrcParser.parse(lrc.readText()) }.getOrDefault(emptyList())
+            else emptyList()
+        }
+        _state.value = _state.value.copy(lyrics = lines)
     }
 
     fun togglePlay() {

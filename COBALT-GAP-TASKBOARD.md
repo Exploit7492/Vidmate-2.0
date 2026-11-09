@@ -91,7 +91,7 @@ VidMate's code (it is not open source); the designs are reimplemented.
 | # | Gap | Plan | Status |
 |---|---|---|---|
 | G1 | Music player | Audio-only Media3 player over downloaded/local audio ✅ |
-| G2 | Lyrics | Lyric lookup + timed display | ⬜ |
+| G2 | Lyrics | Lyric lookup + timed display ✅ |
 | G3 | Equalizer | `android.media.audiofx.Equalizer` | ✅ |
 | G4 | Music playlists | Local playlist entity + UI | ⬜ |
 

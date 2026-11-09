@@ -7,8 +7,12 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.media3.common.MediaItem
@@ -39,6 +43,9 @@ class MusicFragment : Fragment() {
     private var controllerFuture: ListenableFuture<MediaController>? = null
     private var controller: MediaController? = null
     private var loadedUri: String? = null
+
+    /** Ticked while the view is alive so the lyrics line can follow the song. */
+    private var positionMs by mutableLongStateOf(0L)
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -71,6 +78,13 @@ class MusicFragment : Fragment() {
             ContextCompat.getMainExecutor(requireContext())
         )
 
+        viewLifecycleOwner.lifecycleScope.launch {
+            while (true) {
+                positionMs = controller?.currentPosition ?: 0L
+                kotlinx.coroutines.delay(500)
+            }
+        }
+
         binding.musicCompose.setViewCompositionStrategy(
             ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed
         )
@@ -79,6 +93,7 @@ class MusicFragment : Fragment() {
             syncPlayer(state.current?.uri, state.playing)
             MusicScreen(
                 state = state,
+                positionMs = positionMs,
                 onSearch = viewModel::setSearch,
                 onPlay = viewModel::playVisible,
                 onToggle = viewModel::togglePlay,

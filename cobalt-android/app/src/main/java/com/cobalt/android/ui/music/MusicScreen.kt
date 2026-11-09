@@ -32,6 +32,7 @@ import com.cobalt.android.media.LocalMediaItem
 @Composable
 fun MusicScreen(
     state: MusicViewModel.UiState,
+    positionMs: Long = 0L,
     onSearch: (String) -> Unit,
     onPlay: (Int) -> Unit,
     onToggle: () -> Unit,
@@ -42,6 +43,15 @@ fun MusicScreen(
         Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).padding(12.dp)
     ) {
         MiniTransport(state.current, state.playing, onToggle, onNext, onPrevious)
+        val lyric = LrcParser.lineAt(state.lyrics, positionMs)
+        if (lyric != null) {
+            Text(
+                lyric,
+                color = MaterialTheme.colorScheme.primary,
+                fontSize = 13.sp,
+                modifier = Modifier.padding(top = 8.dp)
+            )
+        }
         Spacer(Modifier.height(10.dp))
         OutlinedTextField(
             value = state.search,
