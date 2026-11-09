@@ -1,5 +1,6 @@
 package com.cobalt.android.ui.music
 
+import android.content.ComponentName
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -7,28 +8,36 @@ import android.view.ViewGroup
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
-import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.session.MediaController
+import androidx.media3.session.SessionToken
 import com.cobalt.android.databinding.FragmentMusicBinding
+import com.google.common.util.concurrent.ListenableFuture
 
 /**
- * Music player host (Phase G1 / E10).
+ * Music player host (Phase G1 / E10), now backed by [MusicPlaybackService] so
+ * playback survives backgrounding (Phase C4).
  *
- * Owns an audio-only ExoPlayer. The ViewModel holds the queue/index and drives
- * "playing"; this fragment reacts to that state — when `playing` flips or the
- * current index changes, it loads the matching track and starts/stops the
- * player. When the player reaches the end of a track it calls back into the
- * ViewModel to advance, so a whole album plays through.
+ * The fragment holds a [MediaController] bound to the service's
+ * [androidx.media3.session.MediaSession] rather than its own ExoPlayer. The
+ * ViewModel still owns the queue/index; this reacts to `playing`/current-index
+ * changes by driving the controller, and advances the ViewModel when the
+ * *service's* player reaches the end of a track. Because the service owns the
+ * player, the same audio continues (and stays controllable from the
+ * notification) after the fragment's view is gone.
  */
 class MusicFragment : Fragment() {
 
     private var _binding: FragmentMusicBinding? = null
     private val binding get() = _binding!!
     private val viewModel: MusicViewModel by viewModels()
-    private var player: ExoPlayer? = null
+
+    private var controllerFuture: ListenableFuture<MediaController>? = null
+    private var controller: MediaController? = null
     private var loadedUri: String? = null
 
     override fun onCreateView(
@@ -39,13 +48,29 @@ class MusicFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        player = ExoPlayer.Builder(requireContext()).build().apply {
-            addListener(object : Player.Listener {
-                override fun onPlaybackStateChanged(state: Int) {
-                    if (state == Player.STATE_ENDED) viewModel.onPlaybackEnded()
+        val token = SessionToken(
+            requireContext(),
+            ComponentName(requireContext(), MusicPlaybackService::class.java)
+        )
+        val future = MediaController.Builder(requireContext(), token).buildAsync()
+        controllerFuture = future
+        future.addListener(
+            {
+                controller = future.get().also { c ->
+                    c.addListener(object : Player.Listener {
+                        override fun onPlaybackStateChanged(state: Int) {
+                            if (state == Player.STATE_ENDED) viewModel.onPlaybackEnded()
+                        }
+                    })
+                    // A controller that connected after the user already pressed
+                    // play (fast tap) would otherwise sit idle — reconcile now.
+                    val s = viewModel.state.value
+                    syncPlayer(s.current?.uri, s.playing)
                 }
-            })
-        }
+            },
+            ContextCompat.getMainExecutor(requireContext())
+        )
+
         binding.musicCompose.setViewCompositionStrategy(
             ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed
         )
@@ -64,21 +89,22 @@ class MusicFragment : Fragment() {
     }
 
     private fun syncPlayer(uri: String?, playing: Boolean) {
-        val exo = player ?: return
+        val c = controller ?: return
         if (uri == null) return
         if (uri != loadedUri) {
             loadedUri = uri
-            exo.setMediaItem(MediaItem.fromUri(uri))
-            exo.prepare()
+            c.setMediaItem(MediaItem.fromUri(uri))
+            c.prepare()
         }
-        if (playing && !exo.isPlaying) exo.play()
-        if (!playing && exo.isPlaying) exo.pause()
+        if (playing && !c.isPlaying) c.play()
+        if (!playing && c.isPlaying) c.pause()
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
-        player?.release()
-        player = null
+        controller?.release()
+        controller = null
+        controllerFuture = null
         _binding = null
     }
 }

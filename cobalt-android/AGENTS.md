@@ -51,6 +51,31 @@ JDK 21 works with Gradle 8.7 + AGP 8.5.2 (do NOT downgrade to 17; 17 isn't in ap
 - Tests: `./gradlew :app:testDebugUnitTest`. Feed-parser tests use a test-only
   `org.json:json` (Android's bundled stubs throw off-device).
 
+## Gap-closure work (Session 16+, working tree at /workspace/project)
+The build now lives at `/workspace/project/cobalt-android` and is a **git repo**
+(`/workspace/project`, branch `master`). Bootstrap with `source /workspace/env.sh`
+before any `./gradlew` call. `COBALT-GAP-TASKBOARD.md` (repo root) is the running
+gap list; update its status column (✅/⬜) as items land.
+
+Landing zone for new surfaces (all verified BUILD SUCCESSFUL):
+- Music player `ui/music/` (VM + Compose screen + fragment), ExoPlayer audio-only.
+- Browser gained multi-tab + incognito (`ui/browser/BrowserFragment.kt`); media
+  sniffing is `MediaSniffer`.
+- Playlist batch download: `link/PlaylistDownloader.kt` +
+  `ui/downloads/PlaylistDownloadDialog.kt` (one URL per line; sequential to avoid
+  cobalt `rate-limit`). Entry point: Playlist button on Home's Quick-download card.
+- `link/ResolveFailureAdvisor.kt` appends VPN/retry hints to resolver errors.
+- Splash/onboarding: `SplashActivity` (launcher) → `OnboardingActivity` (first run)
+  → `MainActivity`. Uses `SettingsRepository.onboardingDone`, deliberately
+  **separate** from `firstLaunchDone` (MainActivity's permission/battery prompts).
+- Home-screen widget `widget/DownloadsWidgetProvider.kt` (+ `res/xml/widget_downloads_info.xml`).
+- Adaptive launcher icon: `res/drawable/ic_launcher_foreground.xml`.
+
+Testing pattern that works well here: keep new logic pure and Android-free
+(e.g. `MediaSniffer`, `LocalMediaQuery`, `ResolveFailureAdvisor`) so it gets real
+JVM unit tests under `app/src/test/java/com/cobalt/android/`. Current suite: 70
+tests, 0 failures.
+
 ## Remote access (BLOCKED — Session 15)
 There is no git repo/remote in `/workspace/cobalt-android`; it is the copy the
 user uploaded from Termux. Attempts to mirror-clone the upstream

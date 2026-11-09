@@ -41,7 +41,7 @@ VidMate's code (it is not open source); the designs are reimplemented.
 | C1 | Playback speed control | ExoPlayer `setPlaybackSpeed` UI | ✅ |
 | C2 | In-player quality switch | Track selector from resolved formats | ✅ |
 | C3 | Subtitle / caption support | ExoPlayer `TextOutput` + track picker | ✅ |
-| C4 | Background audio playback | `MediaSessionService` + notification | ⬜ |
+| C4 | Background audio playback | `MediaSessionService` + notification ✅ |
 | C5 | Picture-in-picture / floating window | `enterPictureInPictureMode` (API 26+) | ✅ |
 | C6 | Media-button / headset control | `MediaSession` callbacks | ✅ |
 
