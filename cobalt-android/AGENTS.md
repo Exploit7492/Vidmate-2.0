@@ -74,7 +74,7 @@ Landing zone for new surfaces (all verified BUILD SUCCESSFUL):
 Testing pattern that works well here: keep new logic pure and Android-free
 (e.g. `MediaSniffer`, `LocalMediaQuery`, `ResolveFailureAdvisor`) so it gets real
 JVM unit tests under `app/src/test/java/com/cobalt/android/`. Current suite: 70
-tests, 0 failures.
+tests, 0 failures (grew from 70 as G2/E11/H5/I2 landed).
 
 ## Remote access (BLOCKED — Session 15)
 There is no git repo/remote in `/workspace/cobalt-android`; it is the copy the
