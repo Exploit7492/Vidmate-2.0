@@ -100,12 +100,14 @@ class MainActivity : AppCompatActivity() {
                 val url = UrlMatcher.extractUrl(text)
                 if (url != null) {
                     submitUrl(url)
-                } else {
+                } else if (!text.isNullOrBlank()) {
+                    // Not a host cobalt resolves directly — offer the in-app
+                    // browser, which can sniff the media off the page instead.
                     Snackbar.make(
                         binding.root,
                         getString(R.string.not_a_supported_link),
-                        Snackbar.LENGTH_SHORT
-                    ).show()
+                        Snackbar.LENGTH_LONG
+                    ).setAction("browse") { openInBrowser(text) }.show()
                 }
             }
             intent?.getStringExtra("shortcut_queue") == "true" ||
@@ -133,6 +135,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     // ── URL routing (no WebView) ─────────────────────────────────────────────
+
+    private fun openInBrowser(url: String) {
+        findNavController(R.id.navHost).navigate(
+            R.id.nav_browser,
+            bundleOf("url" to url)
+        )
+    }
 
     private fun submitUrl(url: String) {
         findNavController(R.id.navHost).navigate(

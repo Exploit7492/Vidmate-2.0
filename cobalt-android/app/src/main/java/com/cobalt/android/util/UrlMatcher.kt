@@ -1,20 +1,75 @@
 package com.cobalt.android.util
 
 object UrlMatcher {
+    /**
+     * Hosts the app will hand to cobalt. cobalt does the actual extraction
+     * server-side, so this list is really "what we will offer to download"
+     * rather than "what we can parse locally" — adding a host is what turns a
+     * paste into a working download. Matching is suffix-based
+     * (see [isSupportedUrl]), so a bare apex like `"instagram.com"` also
+     * covers `www.instagram.com`, `m.instagram.com`, etc., which is why most
+     * entries are written without a `www.`.
+     */
     private val SUPPORTED_HOSTS = setOf(
-        "youtube.com", "www.youtube.com", "youtu.be", "m.youtube.com",
-        "tiktok.com", "www.tiktok.com", "vm.tiktok.com",
-        "twitter.com", "www.twitter.com", "x.com", "www.x.com",
-        "instagram.com", "www.instagram.com",
-        "reddit.com", "www.reddit.com", "old.reddit.com", "redd.it",
-        "soundcloud.com", "www.soundcloud.com",
-        "vimeo.com", "www.vimeo.com",
-        "twitch.tv", "www.twitch.tv", "clips.twitch.tv",
-        "dailymotion.com", "www.dailymotion.com",
-        "bilibili.com", "www.bilibili.com",
-        "pinterest.com", "www.pinterest.com",
-        "tumblr.com"
-    )
+        // Big social / video platforms
+        "youtube.com", "youtu.be", "youtube-nocookie.com",
+        "tiktok.com", "vm.tiktok.com", "vt.tiktok.com",
+        "twitter.com", "x.com",
+        "instagram.com", "facebook.com", "fb.watch", "fb.com",
+        "reddit.com", "redd.it",
+        "soundcloud.com", "snd.sc",
+        "vimeo.com", "twitch.tv", "clips.twitch.tv",
+        "dailymotion.com", "dai.ly",
+        "bilibili.com", "b23.tv",
+        "pinterest.com", "pin.it",
+        "tumblr.com",
+        "snapchat.com",
+        "linkedin.com",
+        "vk.com", "vkvideo.ru",
+        "ok.ru",
+        "weibo.com", "weibo.cn",
+        "douyin.com",
+        "kuaishou.com",
+        "xiaohongshu.com",
+        "rumble.com",
+        "odysee.com",
+        "bitchute.com",
+        "streamable.com",
+        "imgur.com",
+        "giphy.com",
+        "9gag.com",
+        "loom.com",
+        "zoom.us",
+        "ted.com",
+        "bbc.co.uk", "bbc.com",
+        "cnn.com",
+        "espn.com",
+        "nbc.com", "abc.net.au",
+        "bandcamp.com",
+        "mixcloud.com",
+        "audiomack.com",
+        "deezer.com",
+        "tidal.com",
+        "napster.com",
+        "newgrounds.com",
+        "archive.org",
+        "coub.com",
+        "nicovideo.jp",
+        "acfun.cn",
+        "youku.com",
+        "iqiyi.com",
+        "qq.com",
+        "vimeo.com",
+        "veoh.com",
+        "metacafe.com",
+        "break.com",
+        "liveleak.com",
+        "vidlii.com",
+        "rutube.ru",
+        "mail.ru",
+        "kick.com",
+        "odysee.tv"
+    ).toSet()
 
     // Matches http(s):// followed by any non-whitespace characters
     private val URL_REGEX = Regex("""https?://\S+""")

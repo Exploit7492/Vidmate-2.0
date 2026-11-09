@@ -1,6 +1,7 @@
 package com.cobalt.android.ui.library
 
 import android.app.Application
+import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.map
@@ -8,8 +9,12 @@ import com.cobalt.android.db.HistoryRepository
 import com.cobalt.android.db.LikedRepository
 import com.cobalt.android.db.entities.HistoryItemType
 import com.cobalt.android.download.DownloadRepository
+import com.cobalt.android.download.DownloadRecord
+import com.cobalt.android.download.MediaStoreWriter
 import com.cobalt.android.ui.history.HistoryRow
 import com.cobalt.android.ui.history.HistoryRowAdapter
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 
 /**
@@ -53,6 +58,23 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
                 subtitle = "${e.authorName} · ${relativeTime(e.likedAt)}",
                 sourceUrl = e.watchUrl
             )
+        }
+    }
+
+    /**
+     * Removes a download completely: its MediaStore entry (the actual file on
+     * disk), then its DB row. The MediaStore delete is best-effort — a row whose
+     * file was already removed by the user (or by a factory reset) must still be
+     * deletable from the queue.
+     */
+    fun delete(record: DownloadRecord) {
+        viewModelScope.launch {
+            if (record.mediaStoreUriString.isNotBlank()) {
+                runCatching {
+                    MediaStoreWriter(getApplication()).delete(Uri.parse(record.mediaStoreUriString))
+                }
+            }
+            downloadRepository.deleteById(record.id)
         }
     }
 

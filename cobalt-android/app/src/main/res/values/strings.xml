@@ -90,4 +90,11 @@
     <string name="settings_invidious_instances_hint">https://yewtu.be</string>
     <string name="settings_shorts_queries">shorts search terms (one per line, blank = default)</string>
     <string name="settings_shorts_queries_hint">gaming clips</string>
+    <string name="action_playback_speed">Playback speed</string>
+    <string name="action_pip">Picture in picture</string>
+    <string name="browser_title">Browser</string>
+    <string name="browser_back">Back</string>
+    <string name="browser_hint">Search or enter address</string>
+    <string name="browser_desktop">Desktop site</string>
+    <string name="browser_download">Download from page</string>
 </resources>

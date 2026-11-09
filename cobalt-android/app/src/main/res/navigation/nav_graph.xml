@@ -28,6 +28,12 @@
         android:label="@string/nav_me"
         tools:layout="@layout/fragment_me" />
 
+    <fragment
+        android:id="@+id/nav_browser"
+        android:name="com.cobalt.android.ui.browser.BrowserFragment"
+        android:label="@string/browser_title"
+        tools:layout="@layout/fragment_browser" />
+
     <!-- Settings is reached from the Me tab (a VidMate-style row), not the
          bottom bar, so it has no bottom-nav menu item. -->
     <fragment

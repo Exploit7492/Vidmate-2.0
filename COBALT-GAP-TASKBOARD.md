@@ -38,18 +38,18 @@ VidMate's code (it is not open source); the designs are reimplemented.
 
 | # | Gap | Plan | Status |
 |---|---|---|---|
-| C1 | Playback speed control | ExoPlayer `setPlaybackSpeed` UI | ⬜ |
+| C1 | Playback speed control | ExoPlayer `setPlaybackSpeed` UI | ✅ |
 | C2 | In-player quality switch | Track selector from resolved formats | ⬜ |
 | C3 | Subtitle / caption support | ExoPlayer `TextOutput` + track picker | ⬜ |
 | C4 | Background audio playback | `MediaSessionService` + notification | ⬜ |
-| C5 | Picture-in-picture / floating window | `enterPictureInPictureMode` (API 26+) | ⬜ |
+| C5 | Picture-in-picture / floating window | `enterPictureInPictureMode` (API 26+) | ✅ |
 | C6 | Media-button / headset control | `MediaSession` callbacks | ⬜ |
 
 ## Phase D — Library, files & vault
 
 | # | Gap | Plan | Status |
 |---|---|---|---|
-| D1 | Delete a downloaded file | Delete MediaStore row + DB row from Library | ⬜ |
+| D1 | Delete a downloaded file | Delete MediaStore row + DB row from Library | ✅ |
 | D2 | Multi-select files | Selection mode in Files tab | ⬜ |
 | D3 | Sort / filter local media | Name/date/size/type sorters | ⬜ |
 | D4 | Local video library (scanner) | MediaStore video scan | ⬜ |
@@ -62,12 +62,12 @@ VidMate's code (it is not open source); the designs are reimplemented.
 
 | # | Gap | Plan | Status |
 |---|---|---|---|
-| E1 | Instagram | cobalt handles it server-side; add host + UI copy | ⬜ |
-| E2 | Facebook | same | ⬜ |
+| E1 | Instagram | cobalt handles it server-side; add host + UI copy | ✅ |
+| E2 | Facebook | same | ✅ |
 | E3 | Playlist URL support | Route playlist URLs through resolver | ⬜ |
 | E4 | Media sniffing from web pages | Sniff `<video>`/m3u8/mp4 in the in-app browser | ⬜ |
 | E5 | VPN suggestion on failure | Detect geo-block/403 → suggest retry | ⬜ |
-| E6 | Broad extractor (hundreds of sites) | Generic host allow-list + cobalt fallback | ⬜ |
+| E6 | Broad extractor (hundreds of sites) | Generic host allow-list + cobalt fallback | ✅ |
 | E7 | Extractor updatable without app update | Remote host/rule list (JSON) refreshed from remote config | ⬜ |
 | E8 | WhatsApp (status saver) | Status dir scan + save | ⬜ |
 | E9 | YouTube sign-in / subs / history / watch-later | Needs Google OAuth — excluded (see note) | ⬜ |
@@ -78,11 +78,11 @@ VidMate's code (it is not open source); the designs are reimplemented.
 
 | # | Gap | Plan | Status |
 |---|---|---|---|
-| F1 | In-app browser | `WebView` screen with address bar | ⬜ |
+| F1 | In-app browser | `WebView` screen with address bar | ✅ |
 | F2 | Multi-tab browsing | Tab model + tab strip | ⬜ |
 | F3 | Incognito mode | Ephemeral cookie store / no history | ⬜ |
-| F4 | Desktop-site toggle | UA override | ⬜ |
-| F5 | Media sniffing in browser | `WebViewClient` request interception → offer download | ⬜ |
+| F4 | Desktop-site toggle | UA override | ✅ |
+| F5 | Media sniffing in browser | `WebViewClient` request interception → offer download | ✅ |
 | F6 | Web-game browser | Same browser, games entry | ⬜ |
 | F7 | Browser anti-detection (JS hook) | UA/JS spoofing — excluded by default (see note) | ⬜ |
 

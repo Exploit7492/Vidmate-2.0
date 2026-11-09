@@ -54,6 +54,7 @@ class LibraryFragment : Fragment() {
                     if (record.originalUrl.isNotBlank()) openUrl(record.originalUrl)
                 },
                 onCancel = { record -> DownloadCanceller.cancel(requireContext(), record.id) },
+                onDelete = { record -> viewModel.delete(record) },
                 onPlay = { record ->
                     if (record.mediaStoreUriString.isNotBlank()) {
                         VideoPlayerDialogFragment.newInstance(record.mediaStoreUriString)

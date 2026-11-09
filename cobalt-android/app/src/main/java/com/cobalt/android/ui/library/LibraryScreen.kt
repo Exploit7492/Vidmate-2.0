@@ -62,6 +62,7 @@ fun LibraryScreen(
     likedRows: List<HistoryRow>,
     onRetry: (DownloadRecord) -> Unit,
     onCancel: (DownloadRecord) -> Unit,
+    onDelete: (DownloadRecord) -> Unit,
     onPlay: (DownloadRecord) -> Unit,
     onOpenUrl: (String) -> Unit
 ) {
@@ -91,7 +92,7 @@ fun LibraryScreen(
         }
 
         when (tabs[tab]) {
-            LibraryTab.DOWNLOADS -> DownloadsTab(activeDownloads, allDownloads, onRetry, onCancel, onPlay)
+            LibraryTab.DOWNLOADS -> DownloadsTab(activeDownloads, allDownloads, onRetry, onCancel, onDelete, onPlay)
             LibraryTab.FILES -> FilesTab(
                 allDownloads.filter { it.status == DownloadStatus.COMPLETE }, onPlay
             )
@@ -107,6 +108,7 @@ private fun DownloadsTab(
     all: List<DownloadRecord>,
     onRetry: (DownloadRecord) -> Unit,
     onCancel: (DownloadRecord) -> Unit,
+    onDelete: (DownloadRecord) -> Unit,
     onPlay: (DownloadRecord) -> Unit
 ) {
     val completed = all.filter {
@@ -125,11 +127,11 @@ private fun DownloadsTab(
     ) {
         if (active.isNotEmpty()) {
             item { SectionHeader("Active") }
-            items(active, key = { "a${it.id}" }) { r -> DownloadCard(r, onRetry, onCancel, onPlay) }
+            items(active, key = { "a${it.id}" }) { r -> DownloadCard(r, onRetry, onCancel, onDelete, onPlay) }
         }
         if (completed.isNotEmpty()) {
             item { SectionHeader("Completed") }
-            items(completed, key = { "c${it.id}" }) { r -> DownloadCard(r, onRetry, onCancel, onPlay) }
+            items(completed, key = { "c${it.id}" }) { r -> DownloadCard(r, onRetry, onCancel, onDelete, onPlay) }
         }
     }
 }
@@ -220,6 +222,7 @@ private fun DownloadCard(
     record: DownloadRecord,
     onRetry: (DownloadRecord) -> Unit,
     onCancel: (DownloadRecord) -> Unit,
+    onDelete: (DownloadRecord) -> Unit,
     onPlay: (DownloadRecord) -> Unit
 ) {
     Column(
@@ -253,7 +256,11 @@ private fun DownloadCard(
             }
             DownloadStatus.COMPLETE -> {
                 StatusLine("${sizeLabel(record)} · saved", SuccessGreen)
-                Action("open") { onPlay(record) }
+                Row {
+                    Action("open") { onPlay(record) }
+                    Spacer(Modifier.width(16.dp))
+                    Action("delete") { onDelete(record) }
+                }
             }
             DownloadStatus.FAILED -> {
                 StatusLine("failed", MaterialTheme.colorScheme.error)
