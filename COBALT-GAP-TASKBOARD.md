@@ -112,7 +112,7 @@ VidMate's code (it is not open source); the designs are reimplemented.
 | # | Gap | Plan | Status |
 |---|---|---|---|
 | I1 | Crash handler / auto-restart | `UncaughtExceptionHandler` + restart activity | ✅ |
-| I2 | In-app APK install (self-update) | `REQUEST_INSTALL_PACKAGES` + update check — needs a signed release channel | ⬜ |
+| I2 | In-app APK install (self-update) | `REQUEST_INSTALL_PACKAGES` + update check — needs a signed release channel ✅ |
 | I3 | Push (FCM + custom service) | Local notification infra built; FCM needs a Google project (see note) | ⬜ |
 | I4 | Plugin architecture (hot-swappable) | Excluded — large framework; extractor hot-update (E7) covers the real need | ⬜ |
 | I5 | Dynamic code loading / hot-fix | Excluded — Play-policy and security-hostile; E7 covers config-level updates | ⬜ |

@@ -4,4 +4,8 @@
          file can be handed to an external player/preview as a content:// URI
          without ever becoming world-readable. -->
     <files-path name="vault" path="vault/" />
+
+    <!-- Downloaded self-update APKs, shared with the system installer (I2).
+         Same private files dir as the vault, so the APK is never world-readable. -->
+    <files-path name="updates" path="updates/" />
 </paths>

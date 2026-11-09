@@ -94,6 +94,11 @@
     <string name="action_pip">Picture in picture</string>
     <string name="action_equalizer">Equalizer</string>
     <string name="action_tracks">Quality and subtitles</string>
+    <string name="update_title">Update</string>
+    <string name="update_up_to_date">You are on the latest version.</string>
+    <string name="update_available">Version %1$s is available.</string>
+    <string name="update_download">Download &amp; install</string>
+    <string name="update_download_failed">Could not download the update.</string>
     <string name="games_title">Games</string>
     <string name="channel_title">Channel</string>
     <string name="status_title">Status saver</string>
