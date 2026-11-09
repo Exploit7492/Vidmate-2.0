@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      Palette reworked to mirror the VidMate (com.nemo.vidmate) design language
+      recovered from the decompiled 6.0204 build (see VIDMATE-REVERSE-ENGINEERING.md):
+      a near-pure-black surface stack with the VidMate brand blue (#0099FF) as the
+      single accent and the VidMate red (#EA3F40) as the secondary/like accent.
+      Hex values read directly out of the decompiled res/values/colors.xml
+      (blue #ff0099ff, red #ffea3f40, gold #ffffc400) and the dark surface ramp
+      (#ff212121 / #ff343434 / #ff282828).
+    -->
+    <color name="cobalt_background">#000000</color>
+    <color name="cobalt_surface">#121212</color>
+    <color name="cobalt_surface_sidebar">#0A0A0A</color>
+    <color name="cobalt_surface_elevated">#1E1E1E</color>
+    <color name="cobalt_surface_card">#1A1A1A</color>
+    <color name="cobalt_divider">#2A2A2A</color>
+    <color name="cobalt_text_primary">#FFFFFF</color>
+    <color name="cobalt_text_secondary">#A8A8A8</color>
+    <color name="cobalt_text_tertiary">#6E6E6E</color>
+    <color name="cobalt_accent_blue">#0099FF</color>
+    <color name="cobalt_success_green">#37AA42</color>
+    <color name="cobalt_error_red">#EA3F40</color>
+    <color name="cobalt_gold">#FFC400</color>
+    <color name="cobalt_input_border">#2E2E2E</color>
+</resources>

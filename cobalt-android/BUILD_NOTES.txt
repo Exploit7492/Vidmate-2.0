@@ -1,0 +1,14 @@
+cobalt-android — packaged 2026-11-09 (Session 15)
+
+This source tree compiles and builds with the real Android toolchain:
+  export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
+  export ANDROID_HOME=/workspace/android-sdk
+  echo "sdk.dir=$ANDROID_HOME" > local.properties
+  ./gradlew :app:assembleDebug
+  ./gradlew :app:testDebugUnitTest   # 44 tests, all passing
+
+Requirements: Android SDK platform 35 + build-tools 35.0.0, JDK 21 (targets JVM 17).
+Gradle build caches (.gradle/, build/, app/build/) are intentionally excluded —
+run the build once to regenerate them.
+
+The prebuilt debug APK (app-debug.apk, ~208 MB) is included alongside this file.
