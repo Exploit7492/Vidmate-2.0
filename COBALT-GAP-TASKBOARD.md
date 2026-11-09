@@ -83,7 +83,7 @@ VidMate's code (it is not open source); the designs are reimplemented.
 | F3 | Incognito mode | Ephemeral cookie store / no history ✅ |
 | F4 | Desktop-site toggle | UA override | ✅ |
 | F5 | Media sniffing in browser | `WebViewClient` request interception → offer download | ✅ |
-| F6 | Web-game browser | Same browser, games entry | ⬜ |
+| F6 | Web-game browser | Same browser, games entry ✅ |
 | F7 | Browser anti-detection (JS hook) | UA/JS spoofing — excluded by default (see note) | ⬜ |
 
 ## Phase G — Music

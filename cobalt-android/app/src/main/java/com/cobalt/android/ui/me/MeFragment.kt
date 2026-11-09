@@ -70,6 +70,9 @@ class MeFragment : Fragment() {
                 onStatus = {
                     findNavController().navigate(R.id.nav_status)
                 },
+                onGames = {
+                    findNavController().navigate(R.id.nav_games)
+                },
                 onBrowser = {
                     findNavController().navigate(R.id.nav_browser)
                 },
