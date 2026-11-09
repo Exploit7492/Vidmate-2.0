@@ -28,7 +28,7 @@ class SplashActivity : AppCompatActivity() {
 
         CoroutineScope(Dispatchers.Main).launch {
             delay(SPLASH_MS)
-            val firstRun = !SettingsRepository(this@SplashActivity).firstLaunchDone
+            val firstRun = !SettingsRepository(this@SplashActivity).onboardingDone
             val next = if (firstRun) OnboardingActivity::class.java else MainActivity::class.java
             startActivity(Intent(this@SplashActivity, next))
             finish()

@@ -71,6 +71,16 @@ class SettingsRepository(context: Context) {
         get() = prefs.getBoolean("first_launch_done", false)
         set(v) { prefs.edit().putBoolean("first_launch_done", v).apply() }
 
+    /**
+     * Whether the intro/coach screens have been seen. Distinct from
+     * [firstLaunchDone], which MainActivity owns for the one-time permission
+     * and battery-optimisation prompts — onboarding must not consume that
+     * flag, or those prompts would be skipped entirely.
+     */
+    var onboardingDone: Boolean
+        get() = prefs.getBoolean("onboarding_done", false)
+        set(v) { prefs.edit().putBoolean("onboarding_done", v).apply() }
+
     /** See [DownloadFormatPreference] KDoc above for the "resolution" naming gap. */
     var defaultDownloadFormat: DownloadFormatPreference
         get() = runCatching {

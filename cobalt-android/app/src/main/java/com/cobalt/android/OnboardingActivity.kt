@@ -68,7 +68,7 @@ class OnboardingActivity : AppCompatActivity() {
     }
 
     private fun finishOnboarding() {
-        SettingsRepository(this).firstLaunchDone = true
+        SettingsRepository(this).onboardingDone = true
         startActivity(Intent(this, MainActivity::class.java))
         finish()
     }
