@@ -78,6 +78,20 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
+    /** Deletes several files at once, for the Files tab's multi-select (D2). */
+    fun deleteMany(records: List<DownloadRecord>) {
+        viewModelScope.launch {
+            records.forEach { record ->
+                if (record.mediaStoreUriString.isNotBlank()) {
+                    runCatching {
+                        MediaStoreWriter(getApplication()).delete(Uri.parse(record.mediaStoreUriString))
+                    }
+                }
+                downloadRepository.deleteById(record.id)
+            }
+        }
+    }
+
     private fun relativeTime(millis: Long): String {
         val diff = System.currentTimeMillis() - millis
         val minutes = TimeUnit.MILLISECONDS.toMinutes(diff)

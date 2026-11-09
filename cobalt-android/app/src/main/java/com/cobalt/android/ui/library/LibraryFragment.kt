@@ -61,7 +61,8 @@ class LibraryFragment : Fragment() {
                             .show(parentFragmentManager, VideoPlayerDialogFragment.TAG)
                     }
                 },
-                onOpenUrl = { url -> openUrl(url) }
+                onOpenUrl = { url -> openUrl(url) },
+                onDeleteMany = { records -> viewModel.deleteMany(records) }
             )
         }
     }

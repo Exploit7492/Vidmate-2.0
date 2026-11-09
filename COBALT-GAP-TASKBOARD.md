@@ -50,7 +50,7 @@ VidMate's code (it is not open source); the designs are reimplemented.
 | # | Gap | Plan | Status |
 |---|---|---|---|
 | D1 | Delete a downloaded file | Delete MediaStore row + DB row from Library | ✅ |
-| D2 | Multi-select files | Selection mode in Files tab | ⬜ |
+| D2 | Multi-select files | Selection mode in Files tab ✅ |
 | D3 | Sort / filter local media | Name/date/size/type sorters | ✅ |
 | D4 | Local video library (scanner) | MediaStore video scan | ✅ |
 | D5 | Local music library | MediaStore audio scan | ✅ |

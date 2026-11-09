@@ -1,7 +1,9 @@
 package com.cobalt.android.ui.library
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,7 +28,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -64,7 +68,8 @@ fun LibraryScreen(
     onCancel: (DownloadRecord) -> Unit,
     onDelete: (DownloadRecord) -> Unit,
     onPlay: (DownloadRecord) -> Unit,
-    onOpenUrl: (String) -> Unit
+    onOpenUrl: (String) -> Unit,
+    onDeleteMany: (List<DownloadRecord>) -> Unit = {}
 ) {
     var tab by remember { mutableIntStateOf(0) }
     val tabs = LibraryTab.entries
@@ -94,7 +99,7 @@ fun LibraryScreen(
         when (tabs[tab]) {
             LibraryTab.DOWNLOADS -> DownloadsTab(activeDownloads, allDownloads, onRetry, onCancel, onDelete, onPlay)
             LibraryTab.FILES -> FilesTab(
-                allDownloads.filter { it.status == DownloadStatus.COMPLETE }, onPlay
+                allDownloads.filter { it.status == DownloadStatus.COMPLETE }, onPlay, onDeleteMany
             )
             LibraryTab.HISTORY -> UrlRows(historyRows, "nothing watched or downloaded yet", onOpenUrl)
             LibraryTab.LIKED -> UrlRows(likedRows, "no liked Shorts yet", onOpenUrl)
@@ -136,55 +141,132 @@ private fun DownloadsTab(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun FilesTab(files: List<DownloadRecord>, onPlay: (DownloadRecord) -> Unit) {
+private fun FilesTab(
+    files: List<DownloadRecord>,
+    onPlay: (DownloadRecord) -> Unit,
+    onDeleteMany: (List<DownloadRecord>) -> Unit
+) {
     if (files.isEmpty()) {
         EmptyState("no saved files yet", "Completed downloads appear here")
         return
     }
-    LazyColumn(
-        Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(12.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        items(files, key = { "f${it.id}" }) { r ->
+    // Multi-select (D2): long-press any file to enter selection mode, tap to
+    // toggle, then act on the whole set. A `null` selection means "not
+    // selecting" — a plain tap plays the file, as before.
+    var selected by remember { mutableStateOf<Set<Long>?>(null) }
+    val inSelection = selected != null
+
+    Column(Modifier.fillMaxSize()) {
+        if (inSelection) {
+            val sel = selected ?: emptySet()
             Row(
-                Modifier.fillMaxWidth()
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                    .clickable { onPlay(r) }
-                    .padding(12.dp),
+                Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_folder),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(22.dp)
+                Text(
+                    "${sel.size} selected",
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontSize = 13.sp,
+                    modifier = Modifier.weight(1f)
                 )
-                Spacer(Modifier.width(12.dp))
-                Column(Modifier.weight(1f)) {
-                    Text(
-                        r.filename.ifBlank { "file" },
-                        color = MaterialTheme.colorScheme.onSurface,
-                        fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis
-                    )
-                    Text(
-                        sizeLabel(r) + if (r.mimeType.isNotBlank()) " · ${r.mimeType.substringAfterLast('/')}" else "",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 11.sp
-                    )
+                Text(
+                    "select all",
+                    color = MaterialTheme.colorScheme.primary,
+                    fontSize = 13.sp,
+                    modifier = Modifier.clickable { selected = files.map { it.id }.toSet() }
+                )
+                Spacer(Modifier.width(16.dp))
+                Text(
+                    "delete",
+                    color = MaterialTheme.colorScheme.error,
+                    fontSize = 13.sp,
+                    modifier = Modifier.clickable {
+                        val chosen = files.filter { it.id in sel }
+                        if (chosen.isNotEmpty()) onDeleteMany(chosen)
+                        selected = null
+                    }
+                )
+                Spacer(Modifier.width(16.dp))
+                Text(
+                    "cancel",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 13.sp,
+                    modifier = Modifier.clickable { selected = null }
+                )
+            }
+        }
+        LazyColumn(
+            Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(files, key = { "f${it.id}" }) { r ->
+                val isSel = selected?.contains(r.id) == true
+                Row(
+                    Modifier.fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(
+                            if (isSel) MaterialTheme.colorScheme.primaryContainer
+                            else MaterialTheme.colorScheme.surfaceVariant
+                        )
+                        .combinedClickable(
+                            onClick = {
+                                if (inSelection) {
+                                    selected = toggleSelection(selected!!, r.id)
+                                } else {
+                                    onPlay(r)
+                                }
+                            },
+                            onLongClick = {
+                                selected = (selected ?: emptySet()) + r.id
+                            }
+                        )
+                        .padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (inSelection) {
+                        androidx.compose.material3.Checkbox(checked = isSel, onCheckedChange = null)
+                        Spacer(Modifier.width(8.dp))
+                    } else {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_folder),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(22.dp)
+                        )
+                        Spacer(Modifier.width(12.dp))
+                    }
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            r.filename.ifBlank { "file" },
+                            color = MaterialTheme.colorScheme.onSurface,
+                            fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis
+                        )
+                        Text(
+                            sizeLabel(r) + if (r.mimeType.isNotBlank()) " · ${r.mimeType.substringAfterLast('/')}" else "",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontSize = 11.sp
+                        )
+                    }
+                    if (!inSelection) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_play),
+                            contentDescription = "play",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                 }
-                Icon(
-                    painter = painterResource(R.drawable.ic_play),
-                    contentDescription = "play",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(20.dp)
-                )
             }
         }
     }
 }
+
+/** Adds [id] to [current] if absent, removes it if present (D2 toggle). */
+private fun toggleSelection(current: Set<Long>, id: Long): Set<Long> =
+    if (current.contains(id)) current - id else current + id
 
 @Composable
 private fun UrlRows(rows: List<HistoryRow>, empty: String, onOpen: (String) -> Unit) {
