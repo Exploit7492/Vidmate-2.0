@@ -98,7 +98,12 @@ class MusicFragment : Fragment() {
                 onPlay = viewModel::playVisible,
                 onToggle = viewModel::togglePlay,
                 onNext = viewModel::next,
-                onPrevious = viewModel::previous
+                onPrevious = viewModel::previous,
+                onPlayPlaylist = viewModel::playPlaylist,
+                onDeletePlaylist = viewModel::deletePlaylist,
+                onCreatePlaylist = { name ->
+                    viewModel.createPlaylist(name, state.visible.map { it.uri })
+                }
             )
         }
     }

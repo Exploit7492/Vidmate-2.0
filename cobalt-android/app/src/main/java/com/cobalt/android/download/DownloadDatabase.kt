@@ -13,6 +13,8 @@ import com.cobalt.android.db.daos.LikedDao
 import com.cobalt.android.db.entities.HistoryEntity
 import com.cobalt.android.db.entities.LikedEntity
 import com.cobalt.android.db.entities.ResolutionCacheEntity
+import com.cobalt.android.music.MusicPlaylist
+import com.cobalt.android.music.MusicPlaylistDao
 
 // Phase 9: History/Liked extend this database rather than ShortsDatabase or a
 // new database of their own. ShortsDatabase (Phase 2) is deliberately an
@@ -25,9 +27,10 @@ import com.cobalt.android.db.entities.ResolutionCacheEntity
         DownloadRecord::class,
         ResolutionCacheEntity::class,
         HistoryEntity::class,
-        LikedEntity::class
+        LikedEntity::class,
+        MusicPlaylist::class
     ],
-    version = 6,
+    version = 7,
     exportSchema = false
 )
 @TypeConverters(StatusConverters::class)
@@ -36,6 +39,7 @@ abstract class DownloadDatabase : RoomDatabase() {
     abstract fun resolutionCacheDao(): ResolutionCacheDao
     abstract fun historyDao(): HistoryDao
     abstract fun likedDao(): LikedDao
+    abstract fun musicPlaylistDao(): MusicPlaylistDao
 
     companion object {
         @Volatile private var INSTANCE: DownloadDatabase? = null
@@ -112,13 +116,26 @@ abstract class DownloadDatabase : RoomDatabase() {
             }
         }
 
+        // Gap-closure: user-created music playlists (G4).
+        private val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS music_playlists (" +
+                        "id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, " +
+                        "name TEXT NOT NULL, " +
+                        "trackUris TEXT NOT NULL, " +
+                        "createdAt INTEGER NOT NULL)"
+                )
+            }
+        }
+
         fun getInstance(context: Context): DownloadDatabase =
             INSTANCE ?: synchronized(this) {
                 INSTANCE ?: Room.databaseBuilder(
                     context.applicationContext,
                     DownloadDatabase::class.java,
                     "cobalt_downloads.db"
-                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6).build().also { INSTANCE = it }
+                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7).build().also { INSTANCE = it }
             }
     }
 }

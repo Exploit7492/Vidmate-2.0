@@ -2,6 +2,8 @@ package com.cobalt.android.ui.music
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,12 +19,17 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cobalt.android.media.LocalMediaItem
+import com.cobalt.android.music.MusicPlaylist
 
 /**
  * Music player UI (Phase G1 / E10): the device's audio as a searchable list
@@ -37,7 +44,10 @@ fun MusicScreen(
     onPlay: (Int) -> Unit,
     onToggle: () -> Unit,
     onNext: () -> Unit,
-    onPrevious: () -> Unit
+    onPrevious: () -> Unit,
+    onPlayPlaylist: (MusicPlaylist) -> Unit = {},
+    onDeletePlaylist: (Long) -> Unit = {},
+    onCreatePlaylist: (String) -> Unit = {}
 ) {
     Column(
         Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).padding(12.dp)
@@ -60,6 +70,12 @@ fun MusicScreen(
             label = { Text("search music") },
             modifier = Modifier.fillMaxWidth()
         )
+        PlaylistsRow(
+            playlists = state.playlists,
+            onPlay = onPlayPlaylist,
+            onDelete = onDeletePlaylist,
+            onCreate = onCreatePlaylist
+        )
         Spacer(Modifier.height(10.dp))
         val visible = state.visible
         if (state.loading) {
@@ -75,6 +91,74 @@ fun MusicScreen(
                 TrackRow(track, selected = track.uri == state.current?.uri) { onPlay(index) }
             }
         }
+    }
+}
+
+/**
+ * The playlists strip (G4): one chip per saved playlist (tap plays, long-press
+ * deletes) plus a "+ save" chip that prompts for a name and stores the tracks
+ * currently visible in the list.
+ */
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+@Composable
+private fun PlaylistsRow(
+    playlists: List<MusicPlaylist>,
+    onPlay: (MusicPlaylist) -> Unit,
+    onDelete: (Long) -> Unit,
+    onCreate: (String) -> Unit
+) {
+    var naming by remember { mutableStateOf(false) }
+    var newName by remember { mutableStateOf("") }
+
+    if (naming) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { naming = false },
+            title = { Text("Save playlist") },
+            text = {
+                OutlinedTextField(
+                    value = newName,
+                    onValueChange = { newName = it },
+                    singleLine = true,
+                    label = { Text("name") }
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    if (newName.isNotBlank()) onCreate(newName)
+                    newName = ""
+                    naming = false
+                }) { Text("Save") }
+            },
+            dismissButton = {
+                TextButton(onClick = { naming = false; newName = "" }) { Text("Cancel") }
+            }
+        )
+    }
+
+    Row(
+        Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        androidx.compose.foundation.lazy.LazyRow(
+            Modifier.weight(1f),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            itemsIndexed(playlists, key = { _, it -> it.id }) { _, pl ->
+                Text(
+                    pl.name,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontSize = 12.sp,
+                    modifier = Modifier
+                        .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(14.dp))
+                        .combinedClickable(
+                            onClick = { onPlay(pl) },
+                            onLongClick = { onDelete(pl.id) }
+                        )
+                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                )
+            }
+        }
+        TextButton(onClick = { naming = true }) { Text("+ save", fontSize = 12.sp) }
     }
 }
 

@@ -6,6 +6,9 @@ import androidx.lifecycle.viewModelScope
 import com.cobalt.android.media.LocalMediaItem
 import com.cobalt.android.media.LocalMediaQuery
 import com.cobalt.android.media.LocalMediaRepository
+import com.cobalt.android.download.DownloadDatabase
+import com.cobalt.android.music.MusicPlaylist
+import com.cobalt.android.music.MusicPlaylistDao
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,6 +25,7 @@ import kotlinx.coroutines.launch
 class MusicViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository = LocalMediaRepository(application)
+    private val playlistDao = DownloadDatabase.getInstance(application).musicPlaylistDao()
 
     data class UiState(
         val tracks: List<LocalMediaItem> = emptyList(),
@@ -29,7 +33,8 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         val playing: Boolean = false,
         val loading: Boolean = true,
         val search: String = "",
-        val lyrics: List<LrcParser.Line> = emptyList()
+        val lyrics: List<LrcParser.Line> = emptyList(),
+        val playlists: List<MusicPlaylist> = emptyList()
     ) {
         val current: LocalMediaItem? get() = tracks.getOrNull(currentIndex)
         val visible: List<LocalMediaItem>
@@ -39,7 +44,10 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     private val _state = MutableStateFlow(UiState())
     val state: StateFlow<UiState> = _state.asStateFlow()
 
-    init { load() }
+    init {
+        load()
+        refreshPlaylists()
+    }
 
     private fun load() {
         viewModelScope.launch {
@@ -49,6 +57,48 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun setSearch(text: String) { _state.value = _state.value.copy(search = text) }
+
+    private fun refreshPlaylists() {
+        viewModelScope.launch {
+            val lists = runCatching { playlistDao.getAll() }.getOrDefault(emptyList())
+            _state.value = _state.value.copy(playlists = lists)
+        }
+    }
+
+    /**
+     * Saves [uris] as a named playlist (G4). The name is required — a
+     * nameless list is unreachable in the UI — so a blank name is rejected by
+     * the caller before this is invoked.
+     */
+    fun createPlaylist(name: String, uris: List<String>) {
+        if (name.isBlank() || uris.isEmpty()) return
+        viewModelScope.launch {
+            runCatching {
+                playlistDao.insert(MusicPlaylist(name = name.trim(), trackUris = MusicPlaylistDao.encode(uris)))
+            }
+            refreshPlaylists()
+        }
+    }
+
+    fun deletePlaylist(id: Long) {
+        viewModelScope.launch {
+            runCatching { playlistDao.deleteById(id) }
+            refreshPlaylists()
+        }
+    }
+
+    /**
+     * Replaces the play queue with the playlist's tracks (in the device
+     * library's order) and starts playing the first one. Tracks no longer on
+     * the device are skipped, since the queue is built from the current scan.
+     */
+    fun playPlaylist(playlist: MusicPlaylist) {
+        val wanted = playlist.uris.toSet()
+        val filtered = _state.value.tracks.filter { it.uri in wanted }
+        if (filtered.isEmpty()) return
+        _state.value = _state.value.copy(tracks = filtered, currentIndex = 0, playing = true)
+        loadLyrics(filtered.first().uri)
+    }
 
     /** Selects a track by its position within the *visible* (filtered) list. */
     fun playVisible(index: Int) {
