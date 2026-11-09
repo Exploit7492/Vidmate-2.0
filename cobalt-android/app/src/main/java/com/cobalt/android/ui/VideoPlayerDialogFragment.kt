@@ -16,6 +16,7 @@ import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import com.cobalt.android.R
 import com.cobalt.android.databinding.DialogVideoPlayerBinding
+import com.cobalt.android.util.EqualizerController
 
 /**
  * Phase 8 — tap-to-play for completed downloads.
@@ -40,6 +41,8 @@ class VideoPlayerDialogFragment : DialogFragment() {
     private val binding get() = _binding!!
     private var player: ExoPlayer? = null
     private var speedIndex = 0
+    private val equalizer = EqualizerController()
+    private var eqIndex = 0
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val dialog = Dialog(requireContext(), R.style.Theme_Cobalt_FullScreenDialog)
@@ -90,6 +93,7 @@ class VideoPlayerDialogFragment : DialogFragment() {
 
         setupPlaybackSpeed(exo)
         setupPip()
+        setupEqualizer(exo)
     }
 
     /**
@@ -117,6 +121,25 @@ class VideoPlayerDialogFragment : DialogFragment() {
             return
         }
         binding.btnPip.setOnClickListener { enterPip() }
+    }
+
+    /**
+     * Binds the platform equalizer to the player's audio session and wires the
+     * EQ button to cycle the device's own preset list. Hidden when the device
+     * exposes no equalizer (the controller reports it unavailable).
+     */
+    private fun setupEqualizer(exo: ExoPlayer) {
+        equalizer.attach(exo.audioSessionId)
+        val presets = equalizer.presetNames()
+        if (!equalizer.isAvailable || presets.isEmpty()) {
+            binding.btnEq.visibility = View.GONE
+            return
+        }
+        binding.btnEq.setOnClickListener {
+            eqIndex = (eqIndex + 1) % presets.size
+            equalizer.applyPreset(eqIndex)
+            binding.btnEq.text = presets[eqIndex].take(10)
+        }
     }
 
     private fun enterPip() {
@@ -150,6 +173,7 @@ class VideoPlayerDialogFragment : DialogFragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        equalizer.detach()
         player?.release()
         player = null
         _binding = null

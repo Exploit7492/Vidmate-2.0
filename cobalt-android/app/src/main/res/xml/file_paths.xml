@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- The vault directory is exposed through a FileProvider so a vaulted
+         file can be handed to an external player/preview as a content:// URI
+         without ever becoming world-readable. -->
+    <files-path name="vault" path="vault/" />
+</paths>

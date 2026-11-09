@@ -58,6 +58,9 @@ class MeFragment : Fragment() {
                 onSettings = {
                     findNavController().navigate(R.id.nav_settings)
                 },
+                onVault = {
+                    findNavController().navigate(R.id.nav_vault)
+                },
                 onBrowser = {
                     findNavController().navigate(R.id.nav_browser)
                 },

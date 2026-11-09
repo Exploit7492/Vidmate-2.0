@@ -34,6 +34,12 @@
         android:label="@string/browser_title"
         tools:layout="@layout/fragment_browser" />
 
+    <fragment
+        android:id="@+id/nav_vault"
+        android:name="com.cobalt.android.vault.VaultFragment"
+        android:label="@string/vault_title"
+        tools:layout="@layout/fragment_vault" />
+
     <!-- Settings is reached from the Me tab (a VidMate-style row), not the
          bottom bar, so it has no bottom-nav menu item. -->
     <fragment

@@ -198,6 +198,13 @@ class SettingsRepository(context: Context) {
         get() = prefs.getBoolean("notify_on_complete", true)
         set(v) { prefs.edit().putBoolean("notify_on_complete", v).apply() }
 
+    /** Vault passcode (blank = vault not yet set up). Stored in app-private
+     *  SharedPreferences; the vault's real protection is the private
+     *  directory, not this value. */
+    var vaultPasscode: String
+        get() = prefs.getString("vault_passcode", "") ?: ""
+        set(v) { prefs.edit().putString("vault_passcode", v).apply() }
+
     companion object {
         const val DEFAULT_DOWNLOAD_LOCATION = "Download/Cobalt"
     }

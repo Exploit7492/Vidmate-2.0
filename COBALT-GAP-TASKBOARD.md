@@ -55,8 +55,8 @@ VidMate's code (it is not open source); the designs are reimplemented.
 | D4 | Local video library (scanner) | MediaStore video scan | ⬜ |
 | D5 | Local music library | MediaStore audio scan | ⬜ |
 | D6 | Local media search | Query local library | ⬜ |
-| D7 | Private vault (passcode) | Passcode gate + move-to-vault (app-private dir) | ⬜ |
-| D8 | Vault import / export | Import from / export to public storage | ⬜ |
+| D7 | Private vault (passcode) | Passcode gate + move-to-vault (app-private dir) | ✅ |
+| D8 | Vault import / export | Import from / export to public storage | ✅ |
 
 ## Phase E — Sites & extraction
 
@@ -92,7 +92,7 @@ VidMate's code (it is not open source); the designs are reimplemented.
 |---|---|---|---|
 | G1 | Music player | Audio-only Media3 player over downloaded/local audio | ⬜ |
 | G2 | Lyrics | Lyric lookup + timed display | ⬜ |
-| G3 | Equalizer | `android.media.audiofx.Equalizer` | ⬜ |
+| G3 | Equalizer | `android.media.audiofx.Equalizer` | ✅ |
 | G4 | Music playlists | Local playlist entity + UI | ⬜ |
 
 ## Phase H — Shell, discovery & UX
@@ -111,13 +111,13 @@ VidMate's code (it is not open source); the designs are reimplemented.
 
 | # | Gap | Plan | Status |
 |---|---|---|---|
-| I1 | Crash handler / auto-restart | `UncaughtExceptionHandler` + restart activity | ⬜ |
+| I1 | Crash handler / auto-restart | `UncaughtExceptionHandler` + restart activity | ✅ |
 | I2 | In-app APK install (self-update) | `REQUEST_INSTALL_PACKAGES` + update check — needs a signed release channel | ⬜ |
 | I3 | Push (FCM + custom service) | Local notification infra built; FCM needs a Google project (see note) | ⬜ |
 | I4 | Plugin architecture (hot-swappable) | Excluded — large framework; extractor hot-update (E7) covers the real need | ⬜ |
 | I5 | Dynamic code loading / hot-fix | Excluded — Play-policy and security-hostile; E7 covers config-level updates | ⬜ |
 | I6 | Signed store release | Excluded — needs a keystore + Play/account the user owns | ⬜ |
-| I7 | Open source / license | Add a LICENSE | ⬜ |
+| I7 | Open source / license | Add a LICENSE | ✅ |
 
 ## Phase J — Not carried over (by design, not a gap)
 

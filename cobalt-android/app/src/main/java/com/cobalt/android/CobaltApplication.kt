@@ -3,6 +3,7 @@ package com.cobalt.android
 import android.app.Application
 import androidx.work.Configuration
 import com.cobalt.android.shorts.source.ShortsQueryFeeder
+import com.cobalt.android.util.CrashHandler
 import com.cobalt.android.util.LocaleHelper
 import com.cobalt.android.util.NotificationHelper
 import com.cobalt.android.util.SettingsRepository
@@ -12,6 +13,9 @@ class CobaltApplication : Application(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
+        // Install the crash guard as early as possible so a failure during the
+        // rest of startup is still captured and restarted.
+        CrashHandler.install(this)
         NotificationHelper(this).createChannel()
         // Phase 13: apply the persisted theme mode before any Activity is
         // created — AppCompatDelegate.setDefaultNightMode() and
