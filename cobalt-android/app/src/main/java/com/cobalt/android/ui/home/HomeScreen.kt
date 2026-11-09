@@ -45,7 +45,7 @@ import com.cobalt.android.ui.theme.CobaltTheme
  * grid ([HomeFeed]) and the inline player overlay ([HomePlayer]).
  */
 @Composable
-fun HomeScreen(viewModel: HomeViewModel) {
+fun HomeScreen(viewModel: HomeViewModel, onPlaylist: () -> Unit = {}) {
     CobaltTheme {
         val feed by viewModel.feed.observeAsState(emptyList())
         val isLoadingFeed by viewModel.isLoadingFeed.observeAsState(false)
@@ -64,7 +64,8 @@ fun HomeScreen(viewModel: HomeViewModel) {
                 status = status,
                 isResolving = isResolving,
                 onValueChange = viewModel::onLinkInputChanged,
-                onSubmit = viewModel::onSubmit
+                onSubmit = viewModel::onSubmit,
+                onPlaylist = onPlaylist
             )
             SectionHeader("Recommended")
             Box(Modifier.weight(1f).fillMaxWidth()) {
@@ -159,7 +160,8 @@ private fun QuickDownloadCard(
     status: String?,
     isResolving: Boolean,
     onValueChange: (String) -> Unit,
-    onSubmit: () -> Unit
+    onSubmit: () -> Unit,
+    onPlaylist: () -> Unit
 ) {
     Column(
         Modifier
@@ -189,6 +191,8 @@ private fun QuickDownloadCard(
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(20.dp)
                 )
+            } else {
+                TextButton(onClick = onPlaylist) { Text("Playlist", fontSize = 12.sp) }
             }
         }
         Spacer(Modifier.height(10.dp))

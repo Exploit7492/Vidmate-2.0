@@ -9,6 +9,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import com.cobalt.android.databinding.FragmentHomeBinding
 import com.cobalt.android.link.LinkResolverRepository
+import com.cobalt.android.ui.downloads.PlaylistDownloadDialog
 import com.cobalt.android.ui.downloads.ResolutionPickerDialog
 
 /**
@@ -53,7 +54,12 @@ class HomeFragment : Fragment() {
             ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed
         )
         binding.homeCompose.setContent {
-            HomeScreen(viewModel)
+            HomeScreen(viewModel) {
+                if (childFragmentManager.findFragmentByTag(PlaylistDownloadDialog.TAG) == null) {
+                    PlaylistDownloadDialog.newInstance()
+                        .show(childFragmentManager, PlaylistDownloadDialog.TAG)
+                }
+            }
         }
 
         // Phase 6: show the resolution picker once a link resolves.

@@ -32,7 +32,7 @@ VidMate's code (it is not open source); the designs are reimplemented.
 | B4 | Download speed shown | Rolling MB/s + ETA in queue UI | ✅ |
 | B5 | BitTorrent / magnet | Excluded this pass — needs a full BitTorrent stack; noted as a separate engine | 🚫 |
 | B6 | SABR | Covered by B1 (segmented adaptive) | ✅ |
-| B7 | Playlist download | Resolve playlist → enqueue all items | ⬜ |
+| B7 | Playlist download | Resolve playlist → enqueue all items ✅ |
 
 ## Phase C — Playback
 
@@ -64,9 +64,9 @@ VidMate's code (it is not open source); the designs are reimplemented.
 |---|---|---|---|
 | E1 | Instagram | cobalt handles it server-side; add host + UI copy | ✅ |
 | E2 | Facebook | same | ✅ |
-| E3 | Playlist URL support | Route playlist URLs through resolver | ⬜ |
-| E4 | Media sniffing from web pages | Sniff `<video>`/m3u8/mp4 in the in-app browser | ⬜ |
-| E5 | VPN suggestion on failure | Detect geo-block/403 → suggest retry | ⬜ |
+| E3 | Playlist URL support | Route playlist URLs through resolver ✅ |
+| E4 | Media sniffing from web pages | Sniff `<video>`/m3u8/mp4 in the in-app browser ✅ |
+| E5 | VPN suggestion on failure | Detect geo-block/403 → suggest retry ✅ |
 | E6 | Broad extractor (hundreds of sites) | Generic host allow-list + cobalt fallback | ✅ |
 | E7 | Extractor updatable without app update | Remote host/rule list (JSON) refreshed from remote config ✅ |
 | E8 | WhatsApp (status saver) | Status dir scan + save | ⬜ |

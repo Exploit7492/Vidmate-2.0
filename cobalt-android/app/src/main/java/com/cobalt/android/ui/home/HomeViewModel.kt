@@ -176,7 +176,10 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                     _statusMessage.value = "Found ${result.formats.size} format(s)."
                 }
                 is LinkResolverRepository.ResolveResult.Error -> {
-                    _statusMessage.value = result.message
+                    // E5: add VPN/retry guidance for geo-blocked and rate-limited
+                    // failures, which are otherwise opaque error strings.
+                    _statusMessage.value = com.cobalt.android.link.ResolveFailureAdvisor
+                        .advise(result.message)
                 }
             }
 

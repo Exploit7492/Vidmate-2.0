@@ -95,6 +95,10 @@
     <string name="action_equalizer">Equalizer</string>
     <string name="action_tracks">Quality and subtitles</string>
     <string name="music_title">Music</string>
+    <string name="playlist_title">Download a playlist</string>
+    <string name="playlist_hint">One URL per line</string>
+    <string name="playlist_start">Download all</string>
+    <string name="playlist_action">Playlist</string>
     <string name="media_library_title">Media library</string>
     <string name="vault_title">Vault</string>
     <string name="browser_title">Browser</string>
