@@ -99,8 +99,8 @@ VidMate's code (it is not open source); the designs are reimplemented.
 
 | # | Gap | Plan | Status |
 |---|---|---|---|
-| H1 | Splash / welcome screen | Branded splash activity | ⬜ |
-| H2 | Onboarding / coach screens | First-run permission + intro pages | ⬜ |
+| H1 | Splash / welcome screen | Branded splash activity ✅ |
+| H2 | Onboarding / coach screens | First-run permission + intro pages ✅ |
 | H3 | Tab set configurable server-side | Read tab config from `remote-config.json` ✅ |
 | H4 | Custom widgets (download animation, wheel, sliding tabs) | Compose equivalents | ⬜ |
 | H5 | Channel pages | Channel feed screen | ⬜ |

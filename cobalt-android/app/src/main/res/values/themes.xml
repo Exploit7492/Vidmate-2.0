@@ -12,6 +12,11 @@
         <item name="bottomSheetDialogTheme">@style/Theme.Cobalt.BottomSheet</item>
     </style>
 
+    <style name="Theme.Cobalt.Splash" parent="Theme.Cobalt">
+        <item name="android:windowBackground">@color/cobalt_background</item>
+        <item name="android:windowNoTitle">true</item>
+    </style>
+
     <style name="Theme.Cobalt.BottomSheet" parent="Theme.Material3.DayNight.BottomSheetDialog">
         <item name="android:colorBackground">@color/cobalt_surface_sidebar</item>
         <item name="colorSurface">@color/cobalt_surface_sidebar</item>
