@@ -3,6 +3,7 @@ package com.cobalt.android
 import android.app.Application
 import androidx.work.Configuration
 import com.cobalt.android.shorts.source.ShortsQueryFeeder
+import com.cobalt.android.remoteconfig.RemoteConfigStore
 import com.cobalt.android.util.CrashHandler
 import com.cobalt.android.util.LocaleHelper
 import com.cobalt.android.util.NotificationHelper
@@ -32,6 +33,10 @@ class CobaltApplication : Application(), Configuration.Provider {
         // list is handled inside applyCustomQueries (falls back to the
         // shipped default), so no empty-check is needed here.
         ShortsQueryFeeder.applyCustomQueries(settings.customShortsQueries)
+        // Seed the remote-config snapshot (extra hosts + tab config) from the
+        // persisted cache so a cold launch with no network still honours the
+        // last-known extractor list and tab set.
+        RemoteConfigStore.seedFromCache(this)
     }
 
     override val workManagerConfiguration: Configuration

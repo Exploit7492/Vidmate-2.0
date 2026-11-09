@@ -18,6 +18,7 @@ import androidx.core.view.WindowCompat
 import androidx.navigation.findNavController
 import androidx.navigation.ui.setupWithNavController
 import com.cobalt.android.databinding.ActivityMainBinding
+import com.cobalt.android.remoteconfig.RemoteConfigStore
 import com.cobalt.android.ui.DownloadQueueSheet
 import com.cobalt.android.ui.DownloadQueueViewModel
 import com.cobalt.android.util.ClipboardHelper
@@ -52,6 +53,7 @@ class MainActivity : AppCompatActivity() {
 
         findViewById<BottomNavigationView>(R.id.navBottom)
             .setupWithNavController(findNavController(R.id.navHost))
+        applyRemoteTabs()
         setupQueueButton()
         observeDownloadQueue()
         handleFirstLaunch()
@@ -66,6 +68,27 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         if (settings.clipboardTriggerEnabled) checkClipboard()
+    }
+
+    // ── Remote tab config (Phase H3) ─────────────────────────────────────────
+
+    /**
+     * Hides bottom-bar items the remote config excludes, so the tab set can be
+     * changed centrally (roll a tab out or pull it back) without an app update.
+     * A null/absent config leaves all four tabs as shipped.
+     */
+    private fun applyRemoteTabs() {
+        val tabs = RemoteConfigStore.tabs() ?: return
+        val nav = findViewById<BottomNavigationView>(R.id.navBottom)
+        val byName = mapOf(
+            "home" to R.id.nav_home,
+            "library" to R.id.nav_library,
+            "shorts" to R.id.nav_shorts,
+            "me" to R.id.nav_me
+        )
+        byName.forEach { (name, id) ->
+            nav.menu.findItem(id)?.isVisible = tabs.contains(name)
+        }
     }
 
     // ── Download queue badge ─────────────────────────────────────────────────

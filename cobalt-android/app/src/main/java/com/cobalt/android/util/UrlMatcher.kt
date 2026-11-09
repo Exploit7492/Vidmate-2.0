@@ -81,7 +81,10 @@ object UrlMatcher {
         return try {
             val url = java.net.URL(trimmed)
             val host = url.host?.lowercase() ?: return false
-            SUPPORTED_HOSTS.any { host == it || host.endsWith(".$it") }
+            // Built-in hosts, plus any fetched from remote config (Phase E7) so
+            // the extractor list can grow without an app release.
+            val extra = com.cobalt.android.remoteconfig.RemoteConfigStore.extraHosts()
+            (SUPPORTED_HOSTS + extra).any { host == it || host.endsWith(".$it") }
         } catch (e: Exception) {
             false
         }

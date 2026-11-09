@@ -38,6 +38,7 @@ import java.util.concurrent.TimeUnit
  */
 class RemoteConfigRepository(context: Context) {
 
+    private val context = context.applicationContext
     private val settings = SettingsRepository(context)
     private val client = OkHttpClient.Builder()
         .connectTimeout(5, TimeUnit.SECONDS)
@@ -61,10 +62,13 @@ class RemoteConfigRepository(context: Context) {
             return@withContext memoized
         }
 
-        val fetched = runCatching { fetchRemoteUrl() }.getOrNull()
-        val resolved = if (fetched != null) {
-            settings.cachedRemoteCobaltUrl = fetched
-            fetched
+        val fetched = runCatching { fetchRemoteConfig() }.getOrNull()
+        val resolved = if (fetched?.url != null) {
+            settings.cachedRemoteCobaltUrl = fetched.url
+            // Phase E7/H3: apply the updatable host list and tab config that
+            // came in the same file, so one fetch updates all three.
+            RemoteConfigStore.update(context, fetched.hosts, fetched.tabs)
+            fetched.url
         } else {
             settings.cachedRemoteCobaltUrl.ifBlank { DEFAULT_INSTANCE_URL }
         }
@@ -74,13 +78,25 @@ class RemoteConfigRepository(context: Context) {
         resolved
     }
 
-    private fun fetchRemoteUrl(): String? {
+    private data class Config(val url: String?, val hosts: Set<String>, val tabs: List<String>?)
+
+    private fun fetchRemoteConfig(): Config? {
         val request = Request.Builder().url(CONFIG_URL).build()
         client.newCall(request).execute().use { response ->
             if (!response.isSuccessful) return null
             val body = response.body?.string() ?: return null
-            val url = JSONObject(body).optString("cobaltInstanceUrl").trim()
-            return url.takeIf { it.startsWith("http://") || it.startsWith("https://") }
+            val json = JSONObject(body)
+            val url = json.optString("cobaltInstanceUrl").trim()
+                .takeIf { it.startsWith("http://") || it.startsWith("https://") }
+            val hosts = json.optJSONArray("supportedHosts")?.let { arr ->
+                (0 until arr.length()).map { arr.optString(it).trim().lowercase() }
+                    .filter { it.isNotBlank() }.toSet()
+            } ?: emptySet()
+            val tabs = json.optJSONArray("tabs")?.let { arr ->
+                (0 until arr.length()).map { arr.optString(it).trim() }
+                    .filter { it.isNotBlank() }
+            }
+            return Config(url, hosts, tabs)
         }
     }
 

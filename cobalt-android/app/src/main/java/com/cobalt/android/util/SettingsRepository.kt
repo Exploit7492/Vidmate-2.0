@@ -198,6 +198,17 @@ class SettingsRepository(context: Context) {
         get() = prefs.getBoolean("notify_on_complete", true)
         set(v) { prefs.edit().putBoolean("notify_on_complete", v).apply() }
 
+    /** Extra host suffixes fetched from remote config (Phase E7), persisted so
+     *  a cold launch with no network still honours the last-known list. */
+    var remoteExtraHosts: Set<String>
+        get() = prefs.getStringSet("remote_extra_hosts", emptySet()) ?: emptySet()
+        set(v) { prefs.edit().putStringSet("remote_extra_hosts", v).apply() }
+
+    /** Bottom-bar tab ids from remote config (Phase H3), comma-joined. */
+    var remoteTabs: String
+        get() = prefs.getString("remote_tabs", "") ?: ""
+        set(v) { prefs.edit().putString("remote_tabs", v).apply() }
+
     /** Vault passcode (blank = vault not yet set up). Stored in app-private
      *  SharedPreferences; the vault's real protection is the private
      *  directory, not this value. */

@@ -68,7 +68,7 @@ VidMate's code (it is not open source); the designs are reimplemented.
 | E4 | Media sniffing from web pages | Sniff `<video>`/m3u8/mp4 in the in-app browser | ⬜ |
 | E5 | VPN suggestion on failure | Detect geo-block/403 → suggest retry | ⬜ |
 | E6 | Broad extractor (hundreds of sites) | Generic host allow-list + cobalt fallback | ✅ |
-| E7 | Extractor updatable without app update | Remote host/rule list (JSON) refreshed from remote config | ⬜ |
+| E7 | Extractor updatable without app update | Remote host/rule list (JSON) refreshed from remote config ✅ |
 | E8 | WhatsApp (status saver) | Status dir scan + save | ⬜ |
 | E9 | YouTube sign-in / subs / history / watch-later | Needs Google OAuth — excluded (see note) | ⬜ |
 | E10 | YouTube Music | Music tab (Phase G) | ⬜ |
@@ -101,7 +101,7 @@ VidMate's code (it is not open source); the designs are reimplemented.
 |---|---|---|---|
 | H1 | Splash / welcome screen | Branded splash activity | ⬜ |
 | H2 | Onboarding / coach screens | First-run permission + intro pages | ⬜ |
-| H3 | Tab set configurable server-side | Read tab config from `remote-config.json` | ⬜ |
+| H3 | Tab set configurable server-side | Read tab config from `remote-config.json` ✅ |
 | H4 | Custom widgets (download animation, wheel, sliding tabs) | Compose equivalents | ⬜ |
 | H5 | Channel pages | Channel feed screen | ⬜ |
 | H6 | Game-centre tab | Excluded — growth/monetisation surface, not a media capability | ⬜ |
