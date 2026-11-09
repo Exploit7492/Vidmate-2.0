@@ -1,13 +1,17 @@
 package com.cobalt.android.ui.home
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -22,7 +26,11 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -80,7 +88,15 @@ fun HomeScreen(viewModel: HomeViewModel, onPlaylist: () -> Unit = {}) {
             }
         }
 
+        val comments by viewModel.comments.observeAsState(emptyList())
+        val isLoadingComments by viewModel.isLoadingComments.observeAsState(false)
+        val commentsError by viewModel.commentsError.observeAsState()
+
         nowPlaying?.let { item ->
+            var showComments by remember { mutableStateOf(false) }
+            LaunchedEffect(showComments, item.videoId) {
+                if (showComments) viewModel.loadComments(item.videoId)
+            }
             Dialog(
                 onDismissRequest = viewModel::stopPlayback,
                 properties = DialogProperties(usePlatformDefaultWidth = false)
@@ -93,6 +109,94 @@ fun HomeScreen(viewModel: HomeViewModel, onPlaylist: () -> Unit = {}) {
                             modifier = Modifier.align(Alignment.TopEnd).padding(8.dp)
                         ) {
                             Text("close", color = Color.White, fontSize = 14.sp)
+                        }
+                        TextButton(
+                            onClick = { showComments = !showComments },
+                            modifier = Modifier.align(Alignment.BottomStart).padding(8.dp)
+                        ) {
+                            Text(
+                                if (showComments) "hide comments" else "comments",
+                                color = Color.White,
+                                fontSize = 14.sp
+                            )
+                        }
+                        if (showComments) {
+                            CommentsPanel(
+                                comments = comments,
+                                isLoading = isLoadingComments,
+                                error = commentsError,
+                                modifier = Modifier
+                                    .align(Alignment.BottomCenter)
+                                    .fillMaxWidth()
+                                    .fillMaxHeight(0.55f)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * The public-comments panel shown over the inline player (E11). Read-only: the
+ * app has no YouTube sign-in, so there is nothing to post with.
+ */
+@Composable
+private fun CommentsPanel(
+    comments: List<com.cobalt.android.feed.comments.CommentsParser.Comment>,
+    isLoading: Boolean,
+    error: String?,
+    modifier: Modifier = Modifier
+) {
+    Surface(color = MaterialTheme.colorScheme.surface, modifier = modifier) {
+        LazyColumn(contentPadding = PaddingValues(12.dp)) {
+            item {
+                Text(
+                    "Comments",
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+            }
+            when {
+                isLoading -> item {
+                    Text("loading comments…", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
+                }
+                error != null -> item {
+                    Text(error, color = MaterialTheme.colorScheme.error, fontSize = 13.sp)
+                }
+                comments.isEmpty() -> item {
+                    Text("no comments", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
+                }
+                else -> items(comments) { c ->
+                    Column(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                c.author.ifBlank { "anonymous" },
+                                color = MaterialTheme.colorScheme.primary,
+                                fontSize = 12.sp
+                            )
+                            if (c.publishedTime.isNotBlank()) {
+                                Text(
+                                    "  ·  ${c.publishedTime}",
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontSize = 11.sp
+                                )
+                            }
+                        }
+                        Text(
+                            c.text,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            fontSize = 13.sp
+                        )
+                        if (c.likeCount.isNotBlank()) {
+                            Text(
+                                "♥ ${c.likeCount}",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontSize = 11.sp
+                            )
                         }
                     }
                 }

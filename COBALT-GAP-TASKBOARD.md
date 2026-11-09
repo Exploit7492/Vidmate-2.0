@@ -72,7 +72,7 @@ VidMate's code (it is not open source); the designs are reimplemented.
 | E8 | WhatsApp (status saver) | Status dir scan + save ✅ |
 | E9 | YouTube sign-in / subs / history / watch-later | Needs Google OAuth — excluded (see note) | ⬜ |
 | E10 | YouTube Music | Music tab (Phase G) ✅ |
-| E11 | Comments | InnerTube comments fetch + UI | ⬜ |
+| E11 | Comments | InnerTube comments fetch + UI ✅ |
 
 ## Phase F — In-app browser
 

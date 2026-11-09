@@ -33,6 +33,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     private val feedRepository = FeedRepository(application)
     private val streamResolver = InnertubeStreamResolver()
+    private val commentsRepository = com.cobalt.android.feed.comments.CommentsRepository()
     private val resolver = LinkResolverRepository(application)
 
     // ── Feed state ──────────────────────────────────────────────────────────
@@ -116,6 +117,37 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     fun stopPlayback() {
         _nowPlaying.value = null
+        clearComments()
+    }
+
+    // ── Comments (E11) ──────────────────────────────────────────────────────
+
+    private val _comments = MutableLiveData<List<com.cobalt.android.feed.comments.CommentsParser.Comment>>(emptyList())
+    val comments: LiveData<List<com.cobalt.android.feed.comments.CommentsParser.Comment>> = _comments
+
+    private val _isLoadingComments = MutableLiveData(false)
+    val isLoadingComments: LiveData<Boolean> = _isLoadingComments
+
+    private val _commentsError = MutableLiveData<String?>(null)
+    val commentsError: LiveData<String?> = _commentsError
+
+    /** Fetches the public comment page for the inline-playing video (E11). */
+    fun loadComments(videoId: String) {
+        if (videoId.isBlank()) return
+        _isLoadingComments.value = true
+        _commentsError.value = null
+        viewModelScope.launch {
+            val page = commentsRepository.fetch(videoId)
+            _comments.value = page?.comments.orEmpty()
+            _commentsError.value = if (page == null) "could not load comments" else null
+            _isLoadingComments.value = false
+        }
+    }
+
+    fun clearComments() {
+        _comments.value = emptyList()
+        _commentsError.value = null
+        _isLoadingComments.value = false
     }
 
     /**
