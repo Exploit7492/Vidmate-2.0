@@ -13,6 +13,15 @@ import com.cobalt.android.R
 class NotificationHelper(private val context: Context) {
     private val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
+    // Read live (not cached) so a Settings change takes effect on the next
+    // notification without restarting anything.
+    private val settings get() = SettingsRepository(context)
+
+    /** Completion notifications respect the "notify when a download finishes"
+     *  toggle; progress/foreground notifications respect the master switch. */
+    private fun completeAllowed() = settings.notificationsEnabled && settings.notifyOnComplete
+    private fun anyAllowed() = settings.notificationsEnabled
+
     companion object {
         const val CHANNEL_ID = "cobalt_downloads"
         const val FOREGROUND_ID = 1
@@ -41,6 +50,7 @@ class NotificationHelper(private val context: Context) {
             .build()
 
     fun updateProgress(recordId: Long, bytes: Int, total: Int, label: String = "Downloading…") {
+        if (!anyAllowed()) return
         val notif = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.stat_sys_download)
             .setContentTitle(label)
@@ -52,6 +62,7 @@ class NotificationHelper(private val context: Context) {
     }
 
     fun showComplete(recordId: Long, filename: String, uri: Uri, mimeType: String = "video/*") {
+        if (!completeAllowed()) return
         val openIntent = PendingIntent.getActivity(
             context, recordId.toInt(),
             Intent(Intent.ACTION_VIEW).apply {
@@ -91,6 +102,7 @@ class NotificationHelper(private val context: Context) {
     }
 
     fun showRetryReady(recordId: Long, originalUrl: String, filename: String) {
+        if (!anyAllowed()) return
         val tapIntent = PendingIntent.getActivity(
             context, recordId.toInt(),
             Intent(context, com.cobalt.android.MainActivity::class.java).apply {

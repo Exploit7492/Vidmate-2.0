@@ -117,7 +117,7 @@ private fun DownloadRow(
                 } else {
                     "%.1f MB".format(record.bytesDownloaded / 1_048_576.0)
                 }
-                StatusText(label)
+                StatusText(label + speedLabel(record))
                 if (record.totalBytes > 0) {
                     LinearProgressIndicator(
                         progress = { pct / 100f },
@@ -154,6 +154,10 @@ private fun DownloadRow(
                 StatusText("network error")
                 RowAction("retry") { onRetry(record) }
             }
+            DownloadStatus.CANCELLED -> {
+                StatusText("cancelled")
+                RowAction("retry") { onRetry(record) }
+            }
         }
     }
 }
@@ -172,3 +176,7 @@ private fun RowAction(label: String, onClick: () -> Unit) {
         modifier = Modifier.padding(top = 8.dp).clickable(onClick = onClick)
     )
 }
+
+/** Human-readable transfer speed, or "" when the engine has not measured one. */
+private fun speedLabel(r: DownloadRecord): String =
+    if (r.speedBps <= 0) "" else " · %.1f MB/s".format(r.speedBps / 1_048_576.0)

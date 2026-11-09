@@ -243,7 +243,7 @@ private fun DownloadCard(
             }
             DownloadStatus.DOWNLOADING -> {
                 val pct = pct(record)
-                StatusLine(progressLabel(record), MaterialTheme.colorScheme.primary)
+                StatusLine(progressLabel(record) + speedLabel(record), MaterialTheme.colorScheme.primary)
                 Bar(pct)
                 Action("cancel") { onCancel(record) }
             }
@@ -261,6 +261,10 @@ private fun DownloadCard(
             }
             DownloadStatus.FAILED_NETWORK -> {
                 StatusLine("network error", MaterialTheme.colorScheme.error)
+                Action("retry") { onRetry(record) }
+            }
+            DownloadStatus.CANCELLED -> {
+                StatusLine("cancelled", MaterialTheme.colorScheme.onSurfaceVariant)
                 Action("retry") { onRetry(record) }
             }
         }
@@ -331,3 +335,7 @@ private fun EmptyState(title: String, hint: String?) {
         }
     }
 }
+
+/** Human-readable transfer speed, or "" when the engine has not measured one. */
+private fun speedLabel(r: DownloadRecord): String =
+    if (r.speedBps <= 0) "" else " · %.1f MB/s".format(r.speedBps / 1_048_576.0)

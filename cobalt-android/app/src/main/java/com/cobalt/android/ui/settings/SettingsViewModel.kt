@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.cobalt.android.download.DownloadRepository
 import com.cobalt.android.shorts.source.InvidiousShortsSource
 import com.cobalt.android.shorts.source.ShortsQueryFeeder
+import com.cobalt.android.util.LocaleHelper
 import com.cobalt.android.util.SettingsRepository
 import com.cobalt.android.util.SettingsRepository.DownloadFormatPreference
 import com.cobalt.android.util.SettingsRepository.ThemeMode
@@ -38,7 +39,11 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         val audioOnly: Boolean,
         val clipboardTrigger: Boolean,
         val invidiousInstances: String,
-        val shortsQueries: String
+        val shortsQueries: String,
+        val appLanguage: String,
+        val contentRegion: String,
+        val notificationsEnabled: Boolean,
+        val notifyOnComplete: Boolean
     )
 
     private val _state = MutableStateFlow(readState())
@@ -57,7 +62,11 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             // Blank when the shipped default is in use (shown as a hint),
             // matching the old fragment's behaviour.
             invidiousInstances = if (isCustomInstances) storedInstances.joinToString("\n") else "",
-            shortsQueries = settings.customShortsQueries.joinToString("\n")
+            shortsQueries = settings.customShortsQueries.joinToString("\n"),
+            appLanguage = settings.appLanguage,
+            contentRegion = settings.contentRegion,
+            notificationsEnabled = settings.notificationsEnabled,
+            notifyOnComplete = settings.notifyOnComplete
         )
     }
 
@@ -102,6 +111,31 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         // Take effect on the very next feed refresh, not just next launch.
         ShortsQueryFeeder.applyCustomQueries(settings.customShortsQueries)
         _state.value = _state.value.copy(shortsQueries = value)
+    }
+
+    /** Persists the UI language and applies it process-wide. The caller
+     *  recreates the Activity so the change is visible immediately (see
+     *  `SettingsScreen`'s `onRecreate`). */
+    fun setAppLanguage(tag: String) {
+        settings.appLanguage = tag
+        LocaleHelper.apply(tag)
+        _state.value = _state.value.copy(appLanguage = tag)
+    }
+
+    /** Content region (ISO-3166) used to bias feed/search queries. */
+    fun setContentRegion(code: String) {
+        settings.contentRegion = code
+        _state.value = _state.value.copy(contentRegion = code)
+    }
+
+    fun setNotificationsEnabled(value: Boolean) {
+        settings.notificationsEnabled = value
+        _state.value = _state.value.copy(notificationsEnabled = value)
+    }
+
+    fun setNotifyOnComplete(value: Boolean) {
+        settings.notifyOnComplete = value
+        _state.value = _state.value.copy(notifyOnComplete = value)
     }
 
     /** Folds in the old `SettingsSheet`'s "clear history" action (it cleared

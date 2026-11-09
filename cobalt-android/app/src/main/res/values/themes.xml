@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.Cobalt" parent="Theme.Material3.Dark">
+    <style name="Theme.Cobalt" parent="Theme.Material3.DayNight">
         <item name="colorPrimary">@color/cobalt_accent_blue</item>
         <item name="colorOnPrimary">@color/cobalt_text_primary</item>
         <item name="colorSurface">@color/cobalt_surface</item>
@@ -12,12 +12,12 @@
         <item name="bottomSheetDialogTheme">@style/Theme.Cobalt.BottomSheet</item>
     </style>
 
-    <style name="Theme.Cobalt.BottomSheet" parent="Theme.Material3.Dark.BottomSheetDialog">
+    <style name="Theme.Cobalt.BottomSheet" parent="Theme.Material3.DayNight.BottomSheetDialog">
         <item name="android:colorBackground">@color/cobalt_surface_sidebar</item>
         <item name="colorSurface">@color/cobalt_surface_sidebar</item>
     </style>
 
-    <style name="Theme.Cobalt.FullScreenDialog" parent="Theme.Material3.Dark">
+    <style name="Theme.Cobalt.FullScreenDialog" parent="Theme.Material3.DayNight">
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowFullscreen">true</item>
         <item name="android:windowIsFloating">false</item>

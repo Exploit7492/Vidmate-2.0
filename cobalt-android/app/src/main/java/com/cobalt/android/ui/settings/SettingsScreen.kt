@@ -44,7 +44,8 @@ fun SettingsScreen(
     viewModel: SettingsViewModel,
     onBack: () -> Unit = {},
     onHistoryClick: () -> Unit = {},
-    onBatteryClick: () -> Unit = {}
+    onBatteryClick: () -> Unit = {},
+    onRecreate: () -> Unit = {}
 ) {
     val state by viewModel.state.collectAsState()
 
@@ -91,6 +92,22 @@ fun SettingsScreen(
             }
 
             Spacer(Modifier.height(24.dp))
+            SectionLabel("app language")
+            ChoiceRow(
+                options = com.cobalt.android.util.LocaleHelper.SUPPORTED,
+                selected = state.appLanguage,
+                onSelect = { viewModel.setAppLanguage(it); onRecreate() }
+            )
+
+            Spacer(Modifier.height(24.dp))
+            SectionLabel("content region")
+            ChoiceRow(
+                options = com.cobalt.android.util.RegionHelper.SUPPORTED,
+                selected = state.contentRegion,
+                onSelect = { viewModel.setContentRegion(it) }
+            )
+
+            Spacer(Modifier.height(24.dp))
             SectionLabel("cobalt API key (optional)")
             OutlinedTextField(
                 value = state.cobaltApiKey,
@@ -103,6 +120,8 @@ fun SettingsScreen(
             Spacer(Modifier.height(24.dp))
             ToggleRow("audio-only mode", state.audioOnly, viewModel::setAudioOnly)
             ToggleRow("clipboard trigger", state.clipboardTrigger, viewModel::setClipboardTrigger)
+            ToggleRow("download notifications", state.notificationsEnabled, viewModel::setNotificationsEnabled)
+            ToggleRow("notify when a download finishes", state.notifyOnComplete, viewModel::setNotifyOnComplete)
 
             Spacer(Modifier.height(24.dp))
             SectionLabel("invidious instances (one per line)")
@@ -180,6 +199,28 @@ private fun FormatChip(label: String, selected: Boolean, onClick: () -> Unit) {
 @Composable
 private fun ThemeChip(label: String, selected: Boolean, onClick: () -> Unit) {
     FilterChip(selected = selected, onClick = onClick, label = { Text(label) })
+}
+
+/** A horizontally-scrollable row of single-choice chips. Used for the language
+ *  and region pickers, whose option lists are wider than the screen. */
+@Composable
+private fun ChoiceRow(
+    options: List<Pair<String, String>>,
+    selected: String,
+    onSelect: (String) -> Unit
+) {
+    androidx.compose.foundation.lazy.LazyRow(
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(options.size) { i ->
+            val (value, label) = options[i]
+            FilterChip(
+                selected = value == selected,
+                onClick = { onSelect(value) },
+                label = { Text(label) }
+            )
+        }
+    }
 }
 
 @Composable

@@ -14,8 +14,9 @@ class DownloadStatusTest {
         DownloadStatus.values().forEach { assertEquals(it, c.toStatus(c.fromStatus(it))) }
     }
 
-    // 6 since Phase 20 added CONVERTING and FAILED_NETWORK (was 5 pre-Phase 20).
-    @Test fun allStatusesPresent() = assertEquals(6, DownloadStatus.values().size)
+    // 7 since gap-closure Phase B added CANCELLED (6 after Phase 20 added
+    // CONVERTING and FAILED_NETWORK).
+    @Test fun allStatusesPresent() = assertEquals(7, DownloadStatus.values().size)
 
     @Test fun recordHasMediaStoreUriField() {
         val r = DownloadRecord(mediaStoreUriString = "content://media/external/downloads/123")

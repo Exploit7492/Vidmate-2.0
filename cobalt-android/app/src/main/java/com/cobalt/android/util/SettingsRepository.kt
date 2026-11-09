@@ -169,6 +169,35 @@ class SettingsRepository(context: Context) {
         get() = prefs.getString("default_audio_quality_profile_id", "") ?: ""
         set(v) { prefs.edit().putString("default_audio_quality_profile_id", v).apply() }
 
+    /**
+     * BCP-47 language tag for the app UI, or "" for "follow the system
+     * default". Applied through `AppCompatDelegate.setApplicationLocales`,
+     * which on API 33+ is also surfaced in the system's per-app language
+     * settings. See `LocaleHelper` for the apply path.
+     */
+    var appLanguage: String
+        get() = prefs.getString("app_language", "") ?: ""
+        set(v) { prefs.edit().putString("app_language", v.trim()).apply() }
+
+    /**
+     * ISO-3166 country/region code (e.g. "US", "IN") used to bias feed and
+     * extractor queries, or "" for "let each source decide". This is a content
+     * preference, distinct from [appLanguage] (the UI language).
+     */
+    var contentRegion: String
+        get() = prefs.getString("content_region", "") ?: ""
+        set(v) { prefs.edit().putString("content_region", v.trim().uppercase()).apply() }
+
+    /** Master switch for download-progress notifications. */
+    var notificationsEnabled: Boolean
+        get() = prefs.getBoolean("notifications_enabled", true)
+        set(v) { prefs.edit().putBoolean("notifications_enabled", v).apply() }
+
+    /** Whether a notification is posted when a download finishes. */
+    var notifyOnComplete: Boolean
+        get() = prefs.getBoolean("notify_on_complete", true)
+        set(v) { prefs.edit().putBoolean("notify_on_complete", v).apply() }
+
     companion object {
         const val DEFAULT_DOWNLOAD_LOCATION = "Download/Cobalt"
     }

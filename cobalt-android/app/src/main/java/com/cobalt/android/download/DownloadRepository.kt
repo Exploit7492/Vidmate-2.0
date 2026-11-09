@@ -24,6 +24,10 @@ class DownloadRepository(context: Context) {
     suspend fun updateProgress(id: Long, bytes: Long, total: Long) =
         dao.updateProgress(id, bytes, total, DownloadStatus.DOWNLOADING)
 
+    /** Progress tick that also records the measured speed for the queue UI. */
+    suspend fun updateProgressWithSpeed(id: Long, bytes: Long, total: Long, speed: Long) =
+        dao.updateProgressWithSpeed(id, bytes, total, speed, DownloadStatus.DOWNLOADING)
+
     // Phase 20: same shape as updateProgress above (reuses bytes/total as
     // a 0..100 percent — see TranscodeWorker's KDoc), but keeps the row in
     // CONVERTING rather than clobbering it back to DOWNLOADING, which is
@@ -43,4 +47,13 @@ class DownloadRepository(context: Context) {
     suspend fun resetStuckDownloads() {
         dao.resetStuckDownloads()
     }
+
+    /** Persists the segmented engine's part list + the ETag it is valid against. */
+    suspend fun updateSegments(id: Long, segmentsJson: String, etag: String, rangeSupported: Boolean) =
+        dao.updateSegments(id, segmentsJson, etag, rangeSupported)
+
+    /** Returns true if a mid-transfer row was actually flipped to CANCELLED. */
+    suspend fun markCancelled(id: Long): Boolean = dao.markCancelled(id) > 0
+
+    suspend fun deleteById(id: Long) = dao.deleteById(id)
 }

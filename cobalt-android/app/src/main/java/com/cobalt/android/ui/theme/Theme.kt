@@ -5,19 +5,36 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
+import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 /**
- * The Compose theme every screen lands on. The dark palette mirrors the
- * VidMate (com.nemo.vidmate) design language recovered from the decompiled
- * 6.0204 build: a near-black surface stack with brand blue (#0099FF) as the
- * single accent and VidMate red (#EA3F40) as the secondary/like accent. These
- * are the same hex values as the XML `colors.xml` palette, so Compose and
- * still-XML surfaces (dialogs, sheets) stay visually consistent.
+ * Both palettes, mirroring `values/colors.xml` (light) and
+ * `values-night/colors.xml` (dark) exactly, so a Compose screen and a
+ * still-XML surface in the same screen never disagree. Which one is used is
+ * decided by [isSystemInDarkTheme], which AppCompatDelegate's night mode
+ * (driven by `SettingsRepository.ThemeMode` through `ThemeApplier`) already
+ * reflects — so the theme picker in Settings changes Compose screens too.
  */
+
+private val CobaltLightColorScheme = lightColorScheme(
+    primary = Color(0xFF0099FF),
+    onPrimary = Color(0xFFFFFFFF),
+    secondary = Color(0xFFE0342F),
+    background = Color(0xFFFFFFFF),
+    onBackground = Color(0xFF111418),
+    surface = Color(0xFFF6F7F9),
+    onSurface = Color(0xFF111418),
+    surfaceVariant = Color(0xFFECEEF1),
+    onSurfaceVariant = Color(0xFF5A6169),
+    outline = Color(0xFFE2E5EA),
+    error = Color(0xFFE0342F),
+    onError = Color(0xFFFFFFFF)
+)
+
 private val CobaltDarkColorScheme = darkColorScheme(
     primary = Color(0xFF0099FF),
     onPrimary = Color(0xFFFFFFFF),
@@ -33,20 +50,11 @@ private val CobaltDarkColorScheme = darkColorScheme(
     onError = Color(0xFFFFFFFF)
 )
 
-// Light scheme exists for completeness/system-theme-switching correctness;
-// the app ships a single dark palette, so this is only reached if a future
-// phase adds real light-mode screens.
-private val CobaltLightColorScheme = lightColorScheme(
-    primary = Color(0xFF0099FF),
-    secondary = Color(0xFFEA3F40),
-    error = Color(0xFFEA3F40)
-)
-
 @Composable
 fun CobaltTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Every shipped screen is a near-pure-black dark surface already, so the
-    // default keeps a Compose screen matching its still-XML neighbours.
+    // Only affects the dark scheme — collapses surface/background to pure
+    // black to match the VidMate-derived look. Ignored in light mode.
     pureBlack: Boolean = true,
     // Real system dynamic color (Android 12+/API 31+) when explicitly asked
     // for; the default keeps this app's own brand palette.
@@ -57,11 +65,13 @@ fun CobaltTheme(
     val colorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && darkTheme ->
             dynamicDarkColorScheme(context)
+        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ->
+            dynamicLightColorScheme(context)
         darkTheme -> CobaltDarkColorScheme
         else -> CobaltLightColorScheme
     }
     val finalScheme = if (darkTheme && pureBlack) {
-        colorScheme.copy(background = Color.Black)
+        colorScheme.copy(background = Color.Black, surface = Color.Black)
     } else {
         colorScheme
     }

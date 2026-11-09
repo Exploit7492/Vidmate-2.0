@@ -27,7 +27,7 @@ import com.cobalt.android.db.entities.ResolutionCacheEntity
         HistoryEntity::class,
         LikedEntity::class
     ],
-    version = 4,
+    version = 6,
     exportSchema = false
 )
 @TypeConverters(StatusConverters::class)
@@ -92,13 +92,33 @@ abstract class DownloadDatabase : RoomDatabase() {
             }
         }
 
+        // Phase B (gap-closure): the segmented-download engine persists its
+        // part list, the origin ETag and the range-support flag on the row so
+        // an interrupted transfer can resume. All three default to empty/false
+        // so pre-existing rows stay valid single-stream downloads.
+        private val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE downloads ADD COLUMN segmentsJson TEXT NOT NULL DEFAULT ''")
+                db.execSQL("ALTER TABLE downloads ADD COLUMN etag TEXT NOT NULL DEFAULT ''")
+                db.execSQL("ALTER TABLE downloads ADD COLUMN rangeSupported INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
+        // Gap-closure: the queue shows live transfer speed, so the engine's
+        // measured bytes/second is stored on the row.
+        private val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE downloads ADD COLUMN speedBps INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
         fun getInstance(context: Context): DownloadDatabase =
             INSTANCE ?: synchronized(this) {
                 INSTANCE ?: Room.databaseBuilder(
                     context.applicationContext,
                     DownloadDatabase::class.java,
                     "cobalt_downloads.db"
-                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4).build().also { INSTANCE = it }
+                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6).build().also { INSTANCE = it }
             }
     }
 }

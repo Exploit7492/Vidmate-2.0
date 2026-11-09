@@ -13,7 +13,7 @@ import androidx.room.TypeConverters
 // can tell "still fetching bytes over the network" apart from "re-encoding
 // a file already on disk" — they have different failure modes and neither
 // should look like the other in the queue UI.
-enum class DownloadStatus { QUEUED, DOWNLOADING, CONVERTING, COMPLETE, FAILED, FAILED_NETWORK }
+enum class DownloadStatus { QUEUED, DOWNLOADING, CONVERTING, COMPLETE, FAILED, FAILED_NETWORK, CANCELLED }
 
 class StatusConverters {
     @TypeConverter fun fromStatus(s: DownloadStatus): String = s.name
@@ -50,5 +50,25 @@ data class DownloadRecord(
     // — kept as a separate field rather than deriving one from the other
     // so a transcode row is self-describing without a join back to its
     // source row just to render a label in DownloadAdapter).
-    val transcodeProfileLabel: String = ""
+    val transcodeProfileLabel: String = "",
+    // --- Segmented-download state (Phase B) ---
+    // Serialised list of Segment parts (see Segment.kt). Empty means the
+    // transfer is (or was) a single-stream download. Persisting this on the
+    // row is what makes a multi-part transfer resumable across a process
+    // kill: the engine reads the offsets back and re-issues only the
+    // missing byte ranges, exactly like VidMate's MTDownloadPart list
+    // (`curPos[start-end+type+url+path]`).
+    val segmentsJson: String = "",
+    // The origin's ETag for the file. A resume is only allowed when the
+    // server's ETag still matches, so a changed file is re-fetched from
+    // scratch instead of silently splicing two different versions together.
+    val etag: String = "",
+    // Whether the origin honoured a Range request. If false the engine falls
+    // back to a single streaming GET and the row is not resumable.
+    val rangeSupported: Boolean = false,
+    // Last measured transfer speed in bytes/second, written on every progress
+    // tick. Persisted (rather than kept in memory) so the queue's LiveData
+    // surfaces it with no extra plumbing; it is meaningless once the row is no
+    // longer DOWNLOADING.
+    val speedBps: Long = 0L
 )

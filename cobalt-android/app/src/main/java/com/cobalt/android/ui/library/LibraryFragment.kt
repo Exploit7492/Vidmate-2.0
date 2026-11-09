@@ -12,6 +12,7 @@ import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import com.cobalt.android.databinding.FragmentLibraryBinding
+import com.cobalt.android.download.DownloadCanceller
 import com.cobalt.android.ui.VideoPlayerDialogFragment
 
 /**
@@ -52,7 +53,7 @@ class LibraryFragment : Fragment() {
                 onRetry = { record ->
                     if (record.originalUrl.isNotBlank()) openUrl(record.originalUrl)
                 },
-                onCancel = { /* cancel wiring is a future phase (matches DownloadQueueSheet) */ },
+                onCancel = { record -> DownloadCanceller.cancel(requireContext(), record.id) },
                 onPlay = { record ->
                     if (record.mediaStoreUriString.isNotBlank()) {
                         VideoPlayerDialogFragment.newInstance(record.mediaStoreUriString)

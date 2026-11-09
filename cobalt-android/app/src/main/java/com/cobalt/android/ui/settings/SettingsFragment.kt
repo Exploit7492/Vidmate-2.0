@@ -50,7 +50,10 @@ class SettingsFragment : Fragment() {
                             data = Uri.parse("package:${requireContext().packageName}")
                         }
                     )
-                }
+                },
+                // The language change is applied process-wide by the ViewModel;
+                // recreating the Activity makes it visible immediately.
+                onRecreate = { requireActivity().recreate() }
             )
         }
     }

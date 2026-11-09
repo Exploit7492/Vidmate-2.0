@@ -9,6 +9,7 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.fragment.app.activityViewModels
 import com.cobalt.android.databinding.SheetDownloadQueueBinding
+import com.cobalt.android.download.DownloadCanceller
 import com.cobalt.android.download.DownloadRecord
 import com.cobalt.android.download.DownloadStatus
 import com.cobalt.android.ui.downloads.DownloadsScreen
@@ -55,7 +56,7 @@ class DownloadQueueSheet : BottomSheetDialogFragment() {
                         it.status == DownloadStatus.FAILED_NETWORK
                 },
                 onRetry = { record -> onRetry?.invoke(record) },
-                onCancel = { /* future: cancel in-progress download */ },
+                onCancel = { record -> DownloadCanceller.cancel(requireContext(), record.id) },
                 onPlay = { record ->
                     VideoPlayerDialogFragment.newInstance(record.mediaStoreUriString)
                         .show(parentFragmentManager, VideoPlayerDialogFragment.TAG)

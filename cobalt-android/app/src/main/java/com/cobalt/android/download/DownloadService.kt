@@ -14,6 +14,7 @@ import com.cobalt.android.transcode.TranscodeProfile
 import com.cobalt.android.transcode.TranscodeWorker
 import com.cobalt.android.util.NotificationHelper
 import kotlinx.coroutines.*
+import kotlin.coroutines.coroutineContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.File
@@ -36,6 +37,10 @@ class DownloadService : Service() {
         .connectTimeout(30, TimeUnit.SECONDS)
         .readTimeout(120, TimeUnit.SECONDS)
         .build()
+
+    // Phase B: the segmented/resumable engine. A single OkHttpClient is shared
+    // so its connection pool is reused across the parallel part requests.
+    private val engine by lazy { SegmentedDownloadEngine(okHttpClient) }
 
     override fun onCreate() {
         super.onCreate()
@@ -95,68 +100,90 @@ class DownloadService : Service() {
 
     private suspend fun processHttps(record: DownloadRecord, transcodeProfile: TranscodeProfile? = null) {
         activeCount.incrementAndGet()
+        // Register this transfer so a cancel tap can reach it (see
+        // CancellationRegistry / DownloadCanceller).
+        val selfJob = coroutineContext[Job]
+        if (selfJob != null) CancellationRegistry.register(record.id, selfJob)
+
+        val headers = buildMap {
+            if (record.cookies.isNotBlank()) put("Cookie", record.cookies)
+            if (record.userAgent.isNotBlank()) put("User-Agent", record.userAgent)
+        }
+        // The partial file lives in filesDir (not cacheDir) so it survives long
+        // enough to resume, and its name is derived from the row id so no extra
+        // column is needed to find it again.
+        val partialDir = File(filesDir, "partial").apply { mkdirs() }
+        val tempFile = File(partialDir, "download_${record.id}.part")
+
         try {
             repository.updateStatus(record.id, DownloadStatus.DOWNLOADING)
-            val request = Request.Builder()
-                .url(record.cobaltUrl)
-                .apply { if (record.cookies.isNotBlank()) header("Cookie", record.cookies) }
-                .apply { if (record.userAgent.isNotBlank()) header("User-Agent", record.userAgent) }
-                .build()
 
-            okHttpClient.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) throw IOException("HTTP ${response.code}")
-                val body = response.body ?: throw IOException("Empty body")
-                val contentLength = body.contentLength()
-                val opened = mediaStoreWriter.open(record.filename, record.mimeType)
-                    ?: throw IOException("MediaStore open failed")
+            val probe = engine.probe(record.cobaltUrl, headers)
+            if (probe.totalBytes <= 0) throw IOException("Unknown content length")
 
-                try {
-                    opened.stream.use { out ->
-                        val buffer = ByteArray(16 * 1024)
-                        var totalRead = 0L
-                        var lastUpdate = 0L
-                        body.byteStream().use { input ->
-                            var n: Int
-                            while (input.read(buffer).also { n = it } != -1) {
-                                out.write(buffer, 0, n)
-                                totalRead += n
-                                val now = System.currentTimeMillis()
-                                if (now - lastUpdate > 500) {
-                                    lastUpdate = now
-                                    repository.updateProgress(record.id, totalRead, contentLength)
-                                    notificationHelper.updateProgress(
-                                        record.id, totalRead.toInt(), contentLength.toInt()
-                                    )
-                                }
-                            }
-                        }
+            if (probe.rangeSupported) {
+                val existing = SegmentList.decode(record.segmentsJson)
+                val outcome = engine.download(
+                    tempFile = tempFile,
+                    headers = headers,
+                    existingSegments = existing,
+                    existingEtag = record.etag,
+                    probe = probe,
+                    maxParts = MAX_PARTS,
+                    onSegments = { segs, etag ->
+                        repository.updateSegments(record.id, SegmentList.encode(segs), etag, true)
+                    },
+                    onProgress = { p ->
+                        repository.updateProgressWithSpeed(record.id, p.downloaded, p.total, p.bytesPerSecond)
+                        notificationHelper.updateProgress(record.id, p.downloaded.toInt(), p.total.toInt())
                     }
-                    mediaStoreWriter.finalize(opened.uri)
-                    repository.updateMediaStoreUri(record.id, opened.uri.toString())
-                    repository.updateStatus(record.id, DownloadStatus.COMPLETE)
-                    recordDownloadHistory(record)
-                    notificationHelper.showComplete(record.id, record.filename, opened.uri, record.mimeType)
-                    // Phase 20: the raw file is on disk and MediaStore-
-                    // finalized — hand off to TranscodeWorker if the user
-                    // picked a target quality/format other than "Original".
-                    // This is a genuinely separate, potentially long-
-                    // running (minutes for a 4K re-encode) job, so it goes
-                    // through WorkManager rather than staying inline here
-                    // and holding this Service's activeCount/foreground
-                    // notification the whole time — same reasoning
-                    // RetryDownloadWorker already uses WorkManager instead
-                    // of retrying inline.
-                    if (transcodeProfile != null) {
-                        TranscodeWorker.enqueue(
-                            applicationContext, sourceRecordId = record.id,
-                            sourceUri = opened.uri, profile = transcodeProfile
-                        )
-                    }
-                } catch (e: Exception) {
-                    mediaStoreWriter.delete(opened.uri)
-                    throw e
+                )
+                if (outcome is SegmentedDownloadEngine.Outcome.Failed) {
+                    throw IOException(outcome.message)
+                }
+            } else {
+                // Origin ignores Range — single streaming GET, not resumable.
+                engine.downloadSingleStream(tempFile, probe.finalUrl, headers) { p ->
+                    repository.updateProgressWithSpeed(record.id, p.downloaded, p.total, p.bytesPerSecond)
+                    notificationHelper.updateProgress(record.id, p.downloaded.toInt(), p.total.toInt())
                 }
             }
+
+            // Move the finished temp file into MediaStore (SAF), the same
+            // finalize path the blob and single-stream downloads use.
+            val opened = mediaStoreWriter.open(record.filename, record.mimeType)
+                ?: throw IOException("MediaStore open failed")
+            try {
+                tempFile.inputStream().use { input ->
+                    opened.stream.use { out -> input.copyTo(out) }
+                }
+                mediaStoreWriter.finalize(opened.uri)
+            } catch (e: Exception) {
+                mediaStoreWriter.delete(opened.uri)
+                throw e
+            }
+            tempFile.delete()
+            repository.updateMediaStoreUri(record.id, opened.uri.toString())
+            repository.updateStatus(record.id, DownloadStatus.COMPLETE)
+            // Clear resume state — the file is complete, nothing to resume.
+            repository.updateSegments(record.id, "", "", false)
+            recordDownloadHistory(record)
+            notificationHelper.showComplete(record.id, record.filename, opened.uri, record.mimeType)
+            if (transcodeProfile != null) {
+                TranscodeWorker.enqueue(
+                    applicationContext, sourceRecordId = record.id,
+                    sourceUri = opened.uri, profile = transcodeProfile
+                )
+            }
+        } catch (e: CancellationException) {
+            // The user cancelled. Mark the row and clear its notification; the
+            // partial file + persisted segments are left in place so the user
+            // can resume by re-downloading the same URL. NonCancellable because
+            // the coroutine is already cancelled and a suspend DB write would
+            // otherwise abort immediately.
+            withContext(NonCancellable) { repository.markCancelled(record.id) }
+            notificationHelper.cancel(record.id)
+            throw e
         } catch (e: UnknownHostException) {
             handleNetworkFail(record)
         } catch (e: IOException) {
@@ -171,6 +198,7 @@ class DownloadService : Service() {
             repository.updateStatus(record.id, DownloadStatus.FAILED)
             notificationHelper.showFailed(record.id, record.filename)
         } finally {
+            CancellationRegistry.unregister(record.id)
             if (activeCount.decrementAndGet() == 0) stopSelf()
         }
     }
@@ -265,6 +293,11 @@ class DownloadService : Service() {
         // a `transcodeProfile` parameter is what every pre-Phase-15 call
         // site keeps using unchanged.
         const val EXTRA_TRANSCODE_PROFILE = "transcodeProfile"
+
+        // Parallel part count. Four is a good default: enough connections to
+        // saturate most links, few enough to stay polite to the origin and to
+        // keep the socket count low on mobile.
+        private const val MAX_PARTS = 4
 
         fun startHttps(
             ctx: Context, cobaltUrl: String, filename: String,
