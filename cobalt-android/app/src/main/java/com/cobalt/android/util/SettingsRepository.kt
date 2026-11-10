@@ -224,6 +224,76 @@ class SettingsRepository(context: Context) {
         get() = prefs.getStringSet("remote_extra_hosts", emptySet()) ?: emptySet()
         set(v) { prefs.edit().putStringSet("remote_extra_hosts", v).apply() }
 
+    /** Content-language rule: "any", "single", or "max2" (VidMate's rule). */
+    var contentLanguageRule: String
+        get() = prefs.getString("content_language_rule", "any") ?: "any"
+        set(v) { prefs.edit().putString("content_language_rule", v).apply() }
+
+    /** Preferred content language (ISO-639-1) used by [contentLanguageRule]. */
+    var preferredContentLanguage: String
+        get() = prefs.getString("preferred_content_language", "") ?: ""
+        set(v) { prefs.edit().putString("preferred_content_language", v.trim().lowercase()).apply() }
+
+    /** Parallel segment count for segmented downloads (1..16). */
+    var parallelSegments: Int
+        get() = prefs.getInt("parallel_segments", 4)
+        set(v) { prefs.edit().putInt("parallel_segments", v.coerceIn(1, 16)).apply() }
+
+    /** Floating (overlay) player enabled — needs SYSTEM_ALERT_WINDOW. */
+    var floatingPlayerEnabled: Boolean
+        get() = prefs.getBoolean("floating_player", false)
+        set(v) { prefs.edit().putBoolean("floating_player", v).apply() }
+
+    /** Online lyrics search enabled (uses LRCLIB). */
+    var onlineLyricsEnabled: Boolean
+        get() = prefs.getBoolean("online_lyrics", true)
+        set(v) { prefs.edit().putBoolean("online_lyrics", v).apply() }
+
+    /** Music sleep timer in minutes (0 = off). */
+    var sleepTimerMinutes: Int
+        get() = prefs.getInt("sleep_timer_minutes", 0)
+        set(v) { prefs.edit().putInt("sleep_timer_minutes", v.coerceAtLeast(0)).apply() }
+
+    /** Whether share links are shortened through the configured host. */
+    var shortenShareLinks: Boolean
+        get() = prefs.getBoolean("shorten_share_links", false)
+        set(v) { prefs.edit().putBoolean("shorten_share_links", v).apply() }
+
+    /** Share-link shortener host base URL (blank = built-in default). */
+    var shareShortenerHost: String
+        get() = prefs.getString("share_shortener_host", "") ?: ""
+        set(v) { prefs.edit().putString("share_shortener_host", v.trim()).apply() }
+
+    /** Persistent keep-alive (resident) notification enabled. */
+    var keepAliveNotice: Boolean
+        get() = prefs.getBoolean("keep_alive_notice", false)
+        set(v) { prefs.edit().putBoolean("keep_alive_notice", v).apply() }
+
+    /** Whether browser history is recorded (off = incognito-always). */
+    var browserHistoryEnabled: Boolean
+        get() = prefs.getBoolean("browser_history", true)
+        set(v) { prefs.edit().putBoolean("browser_history", v).apply() }
+
+    /** Whether browser history/bookmarks are retained at all. */
+    var browserBookmarksEnabled: Boolean
+        get() = prefs.getBoolean("browser_bookmarks", true)
+        set(v) { prefs.edit().putBoolean("browser_bookmarks", v).apply() }
+
+    /** Browser user-agent to report (blank = app default, spoofed as a browser). */
+    var browserUserAgent: String
+        get() = prefs.getString("browser_user_agent", "") ?: ""
+        set(v) { prefs.edit().putString("browser_user_agent", v.trim()).apply() }
+
+    /** Whether the browser hides its downloader identity (anti-detection). */
+    var browserAntiDetection: Boolean
+        get() = prefs.getBoolean("browser_anti_detection", true)
+        set(v) { prefs.edit().putBoolean("browser_anti_detection", v).apply() }
+
+    /** Dynamic code loading / hot-fix allowed (off by default; opt-in). */
+    var hotfixEnabled: Boolean
+        get() = prefs.getBoolean("hotfix_enabled", false)
+        set(v) { prefs.edit().putBoolean("hotfix_enabled", v).apply() }
+
     /** Bottom-bar tab ids from remote config (Phase H3), comma-joined. */
     var remoteTabs: String
         get() = prefs.getString("remote_tabs", "") ?: ""

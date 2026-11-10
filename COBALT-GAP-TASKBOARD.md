@@ -21,9 +21,10 @@ download), **7.2** (trending grid), **7.4** (in-app search results feed), and
 likes/history — `recommend/*` — which needs no Firebase project).
 
 The only rows still 🚫 are genuinely external or excluded on principle: I6
-(keystore/Play account), F7 (runtime anti-detection), H6 (game-centre growth
-surface), I4 (plugin framework), I5 (dynamic code loading), plus the account-only
-YouTube surfaces. Each carries its reason in the row.
+(keystore/Play account) and H6 (game-centre growth surface), plus the account-only
+YouTube surfaces. F7 (anti-detection), I4 (plugin framework) and I5 (dynamic code
+loading) are now built — see the "VidMate-parity round" below for how I5 is kept
+safe. Each remaining row carries its reason in the row.
 
 Ground rule applied throughout: **build the real capability, not a stub.**
 Where VidMate's approach is the reference, the underlying engine design is used
@@ -127,7 +128,7 @@ VidMate's code (it is not open source); the designs are reimplemented.
 | H4 | Custom widgets (download animation, wheel, sliding tabs) | Compose equivalents | ✅ |
 | H5 | Channel pages | Channel feed screen ✅ |
 | H6 | Game-centre tab | Excluded — growth/monetisation surface, not a media capability | 🚫 |
-| H7 | App-widget settings + home-screen widget | `AppWidgetProvider` for downloads | ✅ |
+| H7 | App-widget settings + home-screen widget | `AppWidgetProvider` for downloads + `WidgetSettings`/`WidgetPresenter` and a widget-settings dialog (count, progress, compact, animated spinner) | ✅ |
 
 ## Phase I — Platform & infrastructure
 
@@ -136,8 +137,8 @@ VidMate's code (it is not open source); the designs are reimplemented.
 | I1 | Crash handler / auto-restart | `UncaughtExceptionHandler` + restart activity | ✅ |
 | I2 | In-app APK install (self-update) | `REQUEST_INSTALL_PACKAGES` + update check — needs a signed release channel ✅ |
 | I3 | Push (FCM + custom service) | Local notification infra built; FCM needs a Google project (see note) | 🚫 |
-| I4 | Plugin architecture (hot-swappable) | Excluded — large framework; extractor hot-update (E7) covers the real need | 🚫 |
-| I5 | Dynamic code loading / hot-fix | Excluded — Play-policy and security-hostile; E7 covers config-level updates | 🚫 |
+| I4 | Plugin architecture (hot-swappable) | `plugin/PluginRegistry` + `PluginHost` + bundled `assets/plugins/index.json` + a Modules screen (list/toggle, required modules locked) | ✅ |
+| I5 | Dynamic code loading / hot-fix | `hotfix/HotfixLoader` — opt-in, private-dir only, SHA-256-checked `DexClassLoader`; off by default (see note) | ✅ |
 | I6 | Signed store release | Excluded — needs a keystore + Play/account the user owns | 🚫 |
 | I7 | Open source / license | Add a LICENSE | ✅ |
 
@@ -171,3 +172,53 @@ VidMate's code (it is not open source); the designs are reimplemented.
   Firebase project at all.
 - **I6 signed release**: requires a keystore (and, for Play, a developer
   account). `assembleRelease` can be wired to a keystore the user supplies.
+
+---
+
+## VidMate-parity round (latest)
+
+Second pass aimed squarely at the remaining ❌ rows, all landed and building
+(`:app:assembleDebug` + `:app:testDebugUnitTest` green).
+
+| Area | What was added | Where |
+|---|---|---|
+| Resume playback | Per-URI position store; resumes mid-file, drops near-end | `media/PlaybackPositionStore.kt`, wired in `ui/VideoPlayerDialogFragment.kt` |
+| Player gestures | Swipe to seek; left edge = brightness; right edge = volume, with on-screen feedback | `ui/PlayerGestureController.kt` |
+| Floating pop-up player | Overlay window; button gated on the setting and the overlay permission | `ui/FloatingPlayerWindow.kt`, `res/layout/window_floating_player.xml` |
+| Permission guides | Step-by-step screens for "display over other apps" and all-files/storage | `util/PermissionGuides.kt` |
+| Storage usage | Free-space line in the queue header + shared byte formatter; file-detail size | `util/StorageStats.kt`, `ui/downloads/FileDetailDialog.kt` |
+| Music metadata / grouping | Album + artist tags from MediaStore, group-by-album/artist views | `media/MusicMetadata.kt`, `ui/music/MusicGrouping.kt` |
+| Music share | Long-press a track → share sheet (text/file via FileProvider) | `util/ShareHelper.kt`, `ui/music/MusicScreen.kt` |
+| QR share | ZXing-generated QR of a share link, opened from the Shorts share chooser | `util/QrCodeGenerator.kt`, `ui/common/QrShareDialogFragment.kt` |
+| Bluetooth / offline share | `ACTION_SEND` restricted to Bluetooth, chooser fallback | `util/ShareHelper.kt` (`bluetoothShare`) |
+| Offline + refresh UX | Offline screen with retry; pull-to-refresh wrapper over the feed | `util/NetworkMonitor.kt`, `ui/common/OfflineScreen.kt`, `ui/common/PullToRefreshBox.kt` |
+| Content-language rule | any / single / max-2 rule, offline script detector, applied to the Home feed | `util/ContentLanguageRule.kt`, `util/LanguageDetector.kt`, `ui/home/HomeViewModel.kt` |
+| In-app update | Config-driven update check → download APK → system installer | `update/UpdateChecker.kt` (+ `ApkInstaller`) |
+| Plugin framework | Descriptors, registry, host contract, bundled manifest, Modules screen | `plugin/*`, `assets/plugins/index.json`, `ui/settings/PluginsScreen.kt` |
+| Hot-fix (opt-in) | SHA-256-checked dex loader, private-dir only, off by default | `hotfix/HotfixLoader.kt`, `hotfix/HotfixManifest.kt` |
+| Widget settings | Show count / progress / compact / animated spinner; immediate push to placed widget | `util/WidgetSettings.kt`, `widget/WidgetPresenter.kt`, `ui/settings/WidgetSettingsDialogFragment.kt` |
+| Download share | Completed-item `share` and `Bluetooth` actions over the MediaStore URI | `util/ShareHelper.kt` (`shareUri`), `ui/downloads/DownloadsScreen.kt`, `ui/DownloadQueueSheet.kt` |
+
+New settings surfaced in Settings: parallel segments (stepper), floating player,
+online lyrics, keep-alive notice, browser anti-detection, browser history,
+content-language rule, allow hot-fix modules, manage modules.
+
+New JVM tests: `ContentLanguageRuleTest`, `LanguageDetectorTest`,
+`PluginRegistryTest`, `MusicGroupingTest`, `StorageStatsTest`,
+`WidgetPresenterTest`.
+
+### Note on I5 (hot-fix) — why it is opt-in
+
+Loading code that did not ship in the APK is the most dangerous capability an app
+can have, so the implementation is deliberately constrained rather than free:
+
+- only files inside the app's **private** `filesDir/hotfix` directory are ever
+  loaded (never a world-writable path),
+- the dex must match a recorded **SHA-256** before it loads — a mismatch is
+  refused and the file deleted, not warned about,
+- the whole path is gated on `settings.hotfixEnabled`, which defaults **off**,
+- the class loader's parent is the app loader, so a patch can use app classes
+  but cannot replace them.
+
+This is what lets the row flip from 🚫 to ✅ without adopting VidMate's
+free-for-all dynamic-loading posture.

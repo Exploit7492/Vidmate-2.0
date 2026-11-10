@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="240dp"
+    android:layout_height="150dp"
+    android:background="#CC000000">
+
+    <androidx.media3.ui.PlayerView
+        android:id="@+id/floatingPlayerView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:resize_mode="fit"
+        app:use_controller="true"
+        app:surface_type="texture_view" />
+
+    <View
+        android:id="@+id/floatingDragHandle"
+        android:layout_width="match_parent"
+        android:layout_height="28dp"
+        android:layout_gravity="top"
+        android:background="#66000000" />
+
+    <ImageButton
+        android:id="@+id/floatingClose"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_gravity="top|end"
+        android:padding="6dp"
+        android:src="@android:drawable/ic_menu_close_clear_cancel"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/action_close" />
+
+</FrameLayout>

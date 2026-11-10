@@ -9,11 +9,13 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.cobalt.android"
+        // "VidMate 2.0" rebrand: a distinct id so it installs side-by-side
+        // with the original com.nemo.vidmate and with Cobalt itself.
+        applicationId = "com.vidmate2.android"
         minSdk = 26
         targetSdk = 35
         versionCode = 1
-        versionName = "1.0"
+        versionName = "2.0"
         vectorDrawables { useSupportLibrary = true }
     }
 
@@ -22,6 +24,18 @@ android {
         release {
             isMinifyEnabled = false
             // proguardFiles not needed while minification is disabled
+        }
+    }
+
+    // Per-ABI APKs (+ a universal one). The bundled native codecs and the
+    // torrent library are ~250 MB across all four ABIs, so a device only ever
+    // needs its own slice; this is what Play's ABI splits do anyway.
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
+            isUniversalApk = true
         }
     }
 
@@ -42,6 +56,8 @@ android {
         // See ARCHITECTURE.md Phase 22 for the reasoning and the rest of
         // the migration plan.
         compose = true
+        // D5: generate the IDownloadService Stub/Stub.Proxy from the .aidl.
+        aidl = true
     }
     composeOptions {
         // Kotlin is on 1.9.24 (bumped from 1.9.23 by this same phase,
@@ -83,6 +99,12 @@ dependencies {
     implementation("androidx.navigation:navigation-ui-ktx:2.7.7")
     implementation("androidx.vectordrawable:vectordrawable:1.2.0")
 
+    // --- QR share (VidMate's "share by QR code") ---
+    // ZXing core generates the bitmap; no Play-services barcode dependency
+    // (scanning is not a feature — only generating a code to hand to another
+    // device's camera).
+    implementation("com.google.zxing:core:3.5.3")
+
     // --- Phase 2 (Shorts feed) additions ---
     // ViewPager2 backs the vertical swipeable Shorts feed. This was already
     // used in fragment_shorts.xml before this phase but the dependency itself
@@ -105,6 +127,18 @@ dependencies {
     // JSON parser (nanojson) and a JS engine for YouTube's cipher (Rhino) as
     // transitive dependencies, both pulled automatically from its POM.
     implementation("com.github.TeamNewPipe:NewPipeExtractor:v0.24.6")
+
+    // --- Gap-closure D2 (BitTorrent / magnet downloads) ---
+    // libtorrent4j: the maintained JNI binding to libtorrent. The core jar
+    // carries the Java API; the four `-android-*` jars each carry one ABI's
+    // native `libtorrent4j.so`. All are plain JARs (no AAR), so AGP merges the
+    // per-ABI `lib/<abi>/*.so` entries into the APK the same way it does for
+    // any jniLibs. Verified on Maven Central (2.1.0-35) before pinning.
+    implementation("org.libtorrent4j:libtorrent4j:2.1.0-35")
+    implementation("org.libtorrent4j:libtorrent4j-android-arm64:2.1.0-35")
+    implementation("org.libtorrent4j:libtorrent4j-android-arm:2.1.0-35")
+    implementation("org.libtorrent4j:libtorrent4j-android-x86:2.1.0-35")
+    implementation("org.libtorrent4j:libtorrent4j-android-x86_64:2.1.0-35")
 
     // --- Phase 15 (FFmpeg-based dynamic quality/format transcoding) ---
     // `full-gpl` (not `full` or `min-gpl`) is the only prebuilt ffmpeg-kit

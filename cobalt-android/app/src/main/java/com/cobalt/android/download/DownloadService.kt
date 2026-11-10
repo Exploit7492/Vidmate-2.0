@@ -13,6 +13,7 @@ import com.cobalt.android.db.entities.HistoryItemType
 import com.cobalt.android.transcode.TranscodeProfile
 import com.cobalt.android.transcode.TranscodeWorker
 import com.cobalt.android.util.NotificationHelper
+import com.cobalt.android.util.SettingsRepository
 import kotlinx.coroutines.*
 import kotlin.coroutines.coroutineContext
 import okhttp3.OkHttpClient
@@ -27,7 +28,6 @@ class DownloadService : Service() {
 
     private val job = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.IO + job)
-    private val activeCount = AtomicInteger(0)
     private lateinit var repository: DownloadRepository
     private lateinit var historyRepository: HistoryRepository
     private lateinit var notificationHelper: NotificationHelper
@@ -99,7 +99,7 @@ class DownloadService : Service() {
     }
 
     private suspend fun processHttps(record: DownloadRecord, transcodeProfile: TranscodeProfile? = null) {
-        activeCount.incrementAndGet()
+        active.incrementAndGet()
         // Register this transfer so a cancel tap can reach it (see
         // CancellationRegistry / DownloadCanceller).
         val selfJob = coroutineContext[Job]
@@ -118,10 +118,19 @@ class DownloadService : Service() {
         try {
             repository.updateStatus(record.id, DownloadStatus.DOWNLOADING)
 
+            // D2: magnet links and .torrent files go through libtorrent, not
+            // the HTTP engine.
+            if (TorrentEngine.isTorrent(record.cobaltUrl)) {
+                downloadTorrent(record)
+                return
+            }
+
             val probe = engine.probe(record.cobaltUrl, headers)
             if (probe.totalBytes <= 0) throw IOException("Unknown content length")
 
-            if (probe.rangeSupported) {
+            // SABR streams must never be range-split (the byte windows aren't
+            // independent), so they always take the single-stream path.
+            if (probe.rangeSupported && !SabrDetector.isSabr(record.cobaltUrl, record.mimeType)) {
                 val existing = SegmentList.decode(record.segmentsJson)
                 val outcome = engine.download(
                     tempFile = tempFile,
@@ -129,7 +138,7 @@ class DownloadService : Service() {
                     existingSegments = existing,
                     existingEtag = record.etag,
                     probe = probe,
-                    maxParts = MAX_PARTS,
+                    maxParts = SettingsRepository(this@DownloadService).parallelSegments,
                     onSegments = { segs, etag ->
                         repository.updateSegments(record.id, SegmentList.encode(segs), etag, true)
                     },
@@ -199,12 +208,53 @@ class DownloadService : Service() {
             notificationHelper.showFailed(record.id, record.filename)
         } finally {
             CancellationRegistry.unregister(record.id)
-            if (activeCount.decrementAndGet() == 0) stopSelf()
+            if (active.decrementAndGet() == 0) stopSelf()
         }
     }
 
+    /**
+     * D2: download a magnet/.torrent via [TorrentEngine]. The finished file(s)
+     * are copied into MediaStore the same way HTTP downloads are, so a torrent
+     * shows up in the Library like any other download.
+     */
+    private suspend fun downloadTorrent(record: DownloadRecord) {
+        val torrentDir = File(filesDir, "torrents").apply { mkdirs() }
+        val torrent = TorrentEngine(torrentDir)
+        val outcome = torrent.download(record.cobaltUrl) { p ->
+            repository.updateProgressWithSpeed(record.id, p.downloaded, p.total, p.rateBps)
+            notificationHelper.updateProgress(record.id, p.downloaded.toInt(), p.total.toInt(), p.name)
+        }
+        when (outcome) {
+            is TorrentEngine.Outcome.Completed -> {
+                var firstUri: android.net.Uri? = null
+                outcome.files.filter { it.exists() }.forEach { file ->
+                    val mime = guessMime(file.name)
+                    val opened = mediaStoreWriter.open(file.name, mime) ?: return@forEach
+                    file.inputStream().use { input -> opened.stream.use { input.copyTo(it) } }
+                    mediaStoreWriter.finalize(opened.uri)
+                    if (firstUri == null) firstUri = opened.uri
+                }
+                repository.updateStatus(record.id, DownloadStatus.COMPLETE)
+                notificationHelper.showComplete(
+                    record.id, outcome.name.ifBlank { record.filename },
+                    firstUri ?: android.net.Uri.EMPTY, guessMime(outcome.name)
+                )
+            }
+            is TorrentEngine.Outcome.Failed -> {
+                throw IOException(outcome.message)
+            }
+        }
+    }
+
+    private fun guessMime(name: String): String = when (name.substringAfterLast('.', "").lowercase()) {
+        "mp4" -> "video/mp4"; "mkv" -> "video/x-matroska"; "webm" -> "video/webm"
+        "mp3" -> "audio/mpeg"; "m4a" -> "audio/mp4"; "flac" -> "audio/flac"
+        "avi" -> "video/x-msvideo"; "mov" -> "video/quicktime"
+        else -> "application/octet-stream"
+    }
+
     private suspend fun processBlob(record: DownloadRecord) {
-        activeCount.incrementAndGet()
+        active.incrementAndGet()
         val tempFile = File(record.tempFilePath)
         try {
             repository.updateStatus(record.id, DownloadStatus.DOWNLOADING)
@@ -231,7 +281,7 @@ class DownloadService : Service() {
             notificationHelper.showFailed(record.id, record.filename)
         } finally {
             tempFile.delete()   // always clean up temp file
-            if (activeCount.decrementAndGet() == 0) stopSelf()
+            if (active.decrementAndGet() == 0) stopSelf()
         }
     }
 
@@ -279,6 +329,13 @@ class DownloadService : Service() {
 
     companion object {
         private const val TAG = "DownloadService"
+
+        /** Live transfer count, shared so the AIDL face can report it. */
+        private val active = AtomicInteger(0)
+
+        /** Number of transfers currently running (D5 — AIDL `activeCount()`). */
+        fun activeCount(): Int = active.get()
+
         const val ACTION_HTTPS = "com.cobalt.android.HTTPS"
         const val ACTION_BLOB = "com.cobalt.android.BLOB"
         const val EXTRA_URL = "url"

@@ -81,6 +81,11 @@ class MusicFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             while (true) {
                 positionMs = controller?.currentPosition ?: 0L
+                // Sleep timer (G7): stop playback once the chosen time elapses.
+                if (viewModel.sleepTimerElapsed()) {
+                    controller?.pause()
+                    viewModel.stopForSleep()
+                }
                 kotlinx.coroutines.delay(500)
             }
         }
@@ -103,6 +108,12 @@ class MusicFragment : Fragment() {
                 onDeletePlaylist = viewModel::deletePlaylist,
                 onCreatePlaylist = { name ->
                     viewModel.createPlaylist(name, state.visible.map { it.uri })
+                },
+                onSetSleepTimer = viewModel::setSleepTimer,
+                onShare = { item ->
+                    com.cobalt.android.util.ShareHelper.shareText(
+                        requireContext(), item.uri, "Share audio"
+                    )
                 }
             )
         }

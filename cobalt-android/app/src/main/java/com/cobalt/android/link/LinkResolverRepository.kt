@@ -5,6 +5,7 @@ import com.cobalt.android.download.DownloadDatabase
 import com.cobalt.android.db.entities.ResolutionCacheEntity
 import com.cobalt.android.remoteconfig.RemoteConfigRepository
 import com.cobalt.android.util.SettingsRepository
+import com.cobalt.android.util.WebMediaSniffer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
@@ -80,6 +81,10 @@ class LinkResolverRepository(private val context: Context) {
         private const val CACHE_FRESHNESS_MILLIS = 5 * 60 * 1000L
         /** Rows older than this get swept regardless of freshness, so the table doesn't grow forever. */
         private const val CACHE_EVICTION_MILLIS = 24 * 60 * 60 * 1000L
+
+        /** A desktop Chrome UA — many pages only expose their media to a browser. */
+        private const val BROWSER_USER_AGENT =
+            "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
     }
 
     suspend fun resolve(url: String): ResolveResult = withContext(Dispatchers.IO) {
@@ -94,13 +99,71 @@ class LinkResolverRepository(private val context: Context) {
             }
         }
 
-        val result = resolveFromNetwork(url)
-        if (result is ResolveResult.Success) {
+        var result = resolveFromNetwork(url)
+        // C3: when the cobalt instance can't resolve a link (unsupported host,
+        // instance down, geo-block), fall back to fetching the page and sniffing
+        // it for direct media URLs — the same "JS/WebView-driven extraction"
+        // VidMate falls back to. Only if that also finds nothing do we surface
+        // the original error.
+        if (result is ResolveResult.Error) {
+            resolveViaWebSniff(url)?.let { result = it }
+        }
+        (result as? ResolveResult.Success)?.let { success ->
             cacheDao.upsert(
-                ResolutionCacheEntity(originalUrl = url, formatsJson = serializeFormats(result.formats))
+                ResolutionCacheEntity(originalUrl = url, formatsJson = serializeFormats(success.formats))
             )
         }
         result
+    }
+
+    /**
+     * C3: turn already-rendered HTML (e.g. a WebView's `document.documentElement.outerHTML`)
+     * into resolvable formats. The in-app browser calls this so a page whose
+     * video only appears after JS runs is still downloadable.
+     */
+    fun formatsFromHtml(originalUrl: String, html: String): ResolveResult {
+        val media = WebMediaSniffer.sniff(html)
+        if (media.isEmpty()) return ResolveResult.Error("No downloadable media found on this page.")
+        val formats = media.mapIndexed { i, m ->
+            ResolvedFormat(
+                url = m,
+                filename = WebMediaSniffer.filenameFor(m),
+                mimeType = WebMediaSniffer.mimeTypeFor(m),
+                label = if (media.size == 1) "media" else "media ${i + 1}"
+            )
+        }
+        return ResolveResult.Success(originalUrl, formats)
+    }
+
+    /**
+     * Fetch [pageUrl] with a browser-like user agent, then run [WebMediaSniffer]
+     * over the returned HTML. Returns null when the page is unreachable or
+     * carries no sniffable media, so the caller keeps its original error.
+     */
+    private fun resolveViaWebSniff(pageUrl: String): ResolveResult.Success? {
+        val html = runCatching {
+            val request = Request.Builder()
+                .url(pageUrl)
+                .header("User-Agent", BROWSER_USER_AGENT)
+                .header("Accept", "text/html,application/xhtml+xml")
+                .build()
+            client.newCall(request).execute().use { resp ->
+                if (!resp.isSuccessful) return null
+                resp.body?.string()
+            }
+        }.getOrNull() ?: return null
+
+        val media = WebMediaSniffer.sniff(html)
+        if (media.isEmpty()) return null
+        val formats = media.mapIndexed { i, m ->
+            ResolvedFormat(
+                url = m,
+                filename = WebMediaSniffer.filenameFor(m),
+                mimeType = WebMediaSniffer.mimeTypeFor(m),
+                label = if (media.size == 1) "media" else "media ${i + 1}"
+            )
+        }
+        return ResolveResult.Success(pageUrl, formats)
     }
 
     private suspend fun resolveFromNetwork(url: String): ResolveResult {

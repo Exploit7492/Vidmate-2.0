@@ -400,7 +400,7 @@ Every capability where **both VidMate and Cobalt show ✅** — i.e. Cobalt matc
 | 1 | Ad-free by construction | ❌ | ✅ |
 | 2 | Material-You dynamic colour | ❌ | ✅ |
 | 3 | 4-source merged Shorts pipeline | ❌ | ✅ |
-| 4 | 111-test JVM suite | ❓ | ✅ |
+| 4 | 140-test JVM suite | ❓ | ✅ |
 | 5 | Open-source license | ❌ | ✅ |
 | 6 | Invidious instance pool (user-tunable) | ❌ | ✅ |
 | 7 | Shorts query pool (user-tunable) | ❌ | ✅ |

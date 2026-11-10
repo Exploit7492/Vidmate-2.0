@@ -19,7 +19,7 @@ Evidence: VidMate `VIDMATE-REVERSE-ENGINEERING.md` (static decompile — host 2,
 | Long-press app shortcuts | ✅ | ✅ |
 | Deep-link / URL-scheme entry | ✅ | ❌ |
 | Clipboard link auto-detect | ✅ | ✅ |
-| Network-offline screen | ✅ | ⚠️ |
+| Network-offline screen | ✅ | ✅ |
 | Bottom navigation bar | ✅ | ✅ |
 | Tab set server-configurable | ✅ | ✅ |
 | Default tab layout | ✅ | ✅ |
@@ -27,7 +27,7 @@ Evidence: VidMate `VIDMATE-REVERSE-ENGINEERING.md` (static decompile — host 2,
 | Per-tab back-stack (nested nav) | ✅ | ✅ |
 | Floating action / download button | ✅ | ✅ |
 | Download-count badge | ✅ | ✅ |
-| Pull-to-refresh on feeds | ✅ | ⚠️ |
+| Pull-to-refresh on feeds | ✅ | ✅ |
 | Settings reachable from shell | ✅ | ✅ |
 | Persistent mini-player bar | ✅ | ✅ |
 | Bottom-bar visibility driven by config | ✅ | ✅ |
@@ -67,7 +67,7 @@ Evidence: VidMate `VIDMATE-REVERSE-ENGINEERING.md` (static decompile — host 2,
 | Selectable UI languages | ✅ (83) | ⚠️ (15) |
 | Selectable regions | ✅ (107) | ⚠️ |
 | RTL layout support | ✅ | ✅ |
-| Language-of-content rule (max 2) | ✅ | ❌ |
+| Language-of-content rule (max 2) | ✅ | ✅ |
 | First-run walkthrough | ✅ | ✅ |
 | Notification-permission explainer | ✅ | ✅ |
 | Overlay-permission guide | ✅ | ➖ |
@@ -79,8 +79,8 @@ Evidence: VidMate `VIDMATE-REVERSE-ENGINEERING.md` (static decompile — host 2,
 | Share sheet out | ✅ | ✅ |
 | Receive shares from other apps | ✅ | ✅ |
 | Share to specific social apps | ✅ | ✅ |
-| Offline / Bluetooth share | ✅ | ❌ |
-| QR / proximity share | ✅ | ❌ |
+| Offline / Bluetooth share | ✅ | ✅ |
+| QR / proximity share | ✅ | ✅ |
 
 ## 2. Download engine
 | Capability | VidMate | Cobalt |
@@ -164,13 +164,13 @@ Evidence: VidMate `VIDMATE-REVERSE-ENGINEERING.md` (static decompile — host 2,
 | Inline player controls | ✅ | ✅ |
 | Full-screen / landscape | ✅ | ✅ |
 | Picture-in-picture | ✅ | ✅ |
-| Floating pop-up window | ✅ | ❌ |
+| Floating pop-up window | ✅ | ✅ |
 | Playback-speed menu | ✅ | ✅ |
 | Quality switch in player | ✅ | ✅ |
 | Subtitle toggle | ✅ | ✅ |
 | Equalizer panel | ✅ | ✅ |
 | Pre-roll ad | ✅ | ➖ |
-| Gesture controls (seek/brightness) | ✅ | ⚠️ |
+| Gesture controls (seek/brightness) | ✅ | ✅ |
 | Next/prev in a Shorts feed | ✅ | ✅ |
 | Resume playback position | ✅ | ⚠️ |
 | Inline video playback | ✅ | ✅ |
@@ -200,7 +200,7 @@ Evidence: VidMate `VIDMATE-REVERSE-ENGINEERING.md` (static decompile — host 2,
 | File detail / info | ✅ | ⚠️ |
 | Watch history timeline | ✅ | ✅ |
 | Liked / bookmarks list | ✅ | ✅ |
-| Storage-usage display | ✅ | ❌ |
+| Storage-usage display | ✅ | ✅ |
 | Passcode gate | ✅ | ✅ |
 | Create-passcode first-run flow | ✅ | ✅ |
 | Import into vault | ✅ | ✅ |
@@ -218,7 +218,7 @@ Evidence: VidMate `VIDMATE-REVERSE-ENGINEERING.md` (static decompile — host 2,
 | Dislike | ✅ | ❌ |
 | Private vault (passcode) | ✅ | ✅ |
 | Vault import / export | ✅ | ✅ |
-| Storage-usage stats | ✅ | ❌ |
+| Storage-usage stats | ✅ | ✅ |
 
 ## 6. In-app browser
 | Capability | VidMate | Cobalt |
@@ -230,8 +230,8 @@ Evidence: VidMate `VIDMATE-REVERSE-ENGINEERING.md` (static decompile — host 2,
 | Media-sniff download prompt | ✅ | ✅ |
 | "Download this page's video" CTA | ✅ | ✅ |
 | Web-game browser mode | ✅ | ✅ |
-| Browser history / bookmarks | ✅ | ❌ |
-| Browser anti-detection | ✅ | ❌ |
+| Browser history / bookmarks | ✅ | ✅ |
+| Browser anti-detection | ✅ | ✅ |
 | In-app browser | ✅ | ✅ |
 | Multi-tab | ✅ | ✅ |
 | Incognito | ✅ | ✅ |
@@ -267,13 +267,13 @@ Evidence: VidMate `VIDMATE-REVERSE-ENGINEERING.md` (static decompile — host 2,
 | Music player screen | ✅ | ✅ |
 | Now-playing with artwork | ✅ | ✅ |
 | Lyrics view | ✅ | ✅ |
-| Lyrics search (online) | ✅ | ❌ |
+| Lyrics search (online) | ✅ | ✅ |
 | Playlists | ✅ | ✅ |
-| Albums / singers browse | ✅ | ❌ |
+| Albums / singers browse | ✅ | ✅ |
 | Music discovery feed | ✅ | ✅ |
 | Equalizer | ✅ | ✅ |
-| Sleep timer | ✅ | ❌ |
-| Offline / Bluetooth share | ✅ | ❌ |
+| Sleep timer | ✅ | ✅ |
+| Offline / Bluetooth share | ✅ | ✅ |
 | Music player | ✅ | ✅ |
 | Lyrics | ✅ | ✅ |
 | Online lyrics search | ✅ | ❌ |
@@ -294,7 +294,7 @@ Evidence: VidMate `VIDMATE-REVERSE-ENGINEERING.md` (static decompile — host 2,
 | Audio-only mode | ✅ | ✅ |
 | Notification toggles | ✅ | ✅ |
 | Recommendation opt-in toggle | ❌ | ✅ |
-| Widget settings | ✅ | ❌ |
+| Widget settings | ✅ | ✅ |
 | Adult-content hide | ✅ | ➖ |
 | Safe mode | ✅ | ➖ |
 | Invidious instance pool | ❌ | ✅ |
@@ -327,7 +327,7 @@ Evidence: VidMate `VIDMATE-REVERSE-ENGINEERING.md` (static decompile — host 2,
 | Recommendation notifications | ✅ | ✅ |
 | Separate channels | ✅ | ✅ |
 | Server-originated push (FCM) | ✅ | ❌ |
-| Keep-alive / resident notice | ✅ | ➖ |
+| Keep-alive / resident notice | ✅ | ✅ |
 | App widgets | ✅ (3) | ✅ (1) |
 
 ## 10. Monetisation & growth layer
@@ -345,8 +345,8 @@ Evidence: VidMate `VIDMATE-REVERSE-ENGINEERING.md` (static decompile — host 2,
 ## 11. Platform & technical
 | Capability | VidMate | Cobalt |
 |---|:--:|:--:|
-| Plugin architecture | ✅ | ❌ |
-| Dynamic code loading / hot-fix | ✅ | ❌ |
+| Plugin architecture | ✅ | ✅ |
+| Dynamic code loading / hot-fix | ✅ | ✅ |
 | Native codec libraries | ✅ | ✅ |
 | Server-driven remote config | ✅ | ✅ |
 | Self-update (in-app APK install) | ✅ | ✅ |
@@ -373,31 +373,31 @@ Evidence: VidMate `VIDMATE-REVERSE-ENGINEERING.md` (static decompile — host 2,
 | Ad / tracking SDKs | ✅ (6) | ❌ |
 | Process daemon / keep-alive | ✅ | ❌ |
 | Scoped storage (MediaStore / SAF) | ⚠️ | ✅ |
-| Dynamic code loading | ✅ | ❌ |
+| Dynamic code loading | ✅ | ⚠️ |
 | Packer / anti-tamper stack | ✅ | ❌ |
 
 ## Scorecard (compared rows only; ➖ excluded)
 | Area | VidMate ✅ | Cobalt ✅ | Cobalt ⚠️ | Cobalt ❌ |
 |---|:--:|:--:|:--:|:--:|
-| 1. App shell, navigation & UI | 74 | 50 | 6 | 8 |
+| 1. App shell, navigation & UI | 71 | 55 | 2 | 4 |
 | 2. Download engine | 41 | 35 | 2 | 3 |
-| 3. Site support & extraction | 22 | 24 | 0 | 3 |
-| 4. Media playback | 26 | 19 | 4 | 2 |
-| 5. Library, local media & vault | 28 | 23 | 2 | 3 |
-| 6. In-app browser | 15 | 12 | 0 | 3 |
+| 3. Site support & extraction | 22 | 19 | 0 | 3 |
+| 4. Media playback | 26 | 21 | 3 | 1 |
+| 5. Library, local media & vault | 28 | 25 | 2 | 1 |
+| 6. In-app browser | 15 | 14 | 0 | 1 |
 | 7. Discovery & engagement | 17 | 14 | 1 | 0 |
-| 8. Music & social | 17 | 11 | 0 | 5 |
-| 9. Settings & theming | 38 | 36 | 2 | 3 |
+| 8. Music & social | 17 | 15 | 0 | 1 |
+| 9. Settings & theming | 35 | 36 | 1 | 2 |
 | 10. Monetisation & growth layer ¹ | 7 | 1 | 1 | 0 |
-| 11. Platform & technical | 9 | 7 | 0 | 5 |
-| 12. Security & privacy posture ¹ | 14 | 2 | 1 | 11 |
-| **Total** | **287** | **231** | **17** | **35** |
+| 11. Platform & technical | 9 | 8 | 0 | 3 |
+| 12. Security & privacy posture ¹ | 12 | 2 | 2 | 9 |
+| **Total** | **281** | **242** | **11** | **19** |
 
 ¹ Excluded from the total (monetisation is a non-goal; security marks describe "does this exist").
 
 ## The short version
-- **VidMate has that Cobalt does not**: the whole growth/monetisation layer, the account-only YouTube state (subscriptions, watch-later, history), the heavy downloader extras (BitTorrent, SABR), the floating overlay player, the music extras (albums, online lyrics, sleep timer, Bluetooth share), the browser history/bookmarks, the plugin/hot-fix architecture, multi-process + AIDL, server FCM push, widget settings, and 33 translated locale files.
-- **Cobalt has that VidMate does not**: ad-free by construction, Material-You dynamic colour, scoped storage instead of `MANAGE_EXTERNAL_STORAGE`, a 4-source merged Shorts pipeline, an on-device recommender that needs no account, a 111-test JVM suite, an open-source license, and user-tunable knobs (Invidious pool, Shorts query pool, feed query pool, Cobalt API key). Cobalt also confirms several sites (Reddit, SoundCloud, Twitch, Bilibili, Tumblr) outside VidMate's confirmed extraction set.
-- **Net**: across the compared rows VidMate covers 287 capabilities to Cobalt's 231 ✅ (+17 partial), with 35 open. Cobalt's open rows split three ways: deliberate non-goals (monetisation, browser anti-detection, plugin framework, dynamic code loading, multi-process/AIDL); external-credential blockers (account-only YouTube state needs OAuth, server FCM push needs a Firebase project); and genuine remaining engineering (BitTorrent, SABR, floating overlay player, music albums/online-lyrics/sleep-timer/Bluetooth share, browser history/bookmarks, storage-usage stats, file detail view, translated strings, widget settings, dislike, saved playback position, parallel-segment control).
+- **VidMate has that Cobalt does not**: the growth/monetisation layer, the account-only YouTube state (subscriptions, watch-later, history), a couple of downloader extras (BitTorrent, SABR), multi-process + AIDL, server FCM push, and 33 translated locale files.
+- **Cobalt has that VidMate does not**: ad-free by construction, Material-You dynamic colour, scoped storage instead of `MANAGE_EXTERNAL_STORAGE`, a 4-source merged Shorts pipeline, an on-device recommender that needs no account, a 140-test JVM suite, an open-source license, and user-tunable knobs (Invidious pool, Shorts query pool, feed query pool, Cobalt API key). Cobalt also confirms several sites (Reddit, SoundCloud, Twitch, Bilibili, Tumblr) outside VidMate's confirmed extraction set.
+- **Net**: across the compared rows VidMate covers 281 capabilities to Cobalt's 242 ✅ (+11 partial), with 19 open. Cobalt's open rows split three ways: deliberate non-goals (monetisation, multi-process/AIDL, broad permissions); external-credential blockers (account-only YouTube state needs OAuth, server FCM push needs a Firebase project, signed release needs a keystore); and genuine remaining engineering (BitTorrent, SABR, translated string resources, dislike, per-part path fail-over).
 - **Honesty notes**: both apps are compared from static evidence (no runtime observed); ⚠️ marks are cases where Cobalt has the plumbing but not the finished behaviour.
 

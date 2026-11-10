@@ -13,6 +13,7 @@ import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
+import com.cobalt.android.R
 import com.cobalt.android.databinding.FragmentShortsBinding
 import com.cobalt.android.shorts.model.ShortItem
 import com.cobalt.android.shorts.model.StreamKind
@@ -226,11 +227,25 @@ class ShortsFragment : Fragment() {
     }
 
     private fun shareShort(item: ShortItem) {
-        val intent = Intent(Intent.ACTION_SEND).apply {
-            type = "text/plain"
-            putExtra(Intent.EXTRA_TEXT, item.watchUrl)
-        }
-        startActivity(Intent.createChooser(intent, item.title))
+        // Offer the two ways VidMate shares: a normal link share and a QR code
+        // the other device scans. Kept as a small chooser rather than a second
+        // button so the shorts chrome stays uncluttered.
+        val options = arrayOf(getString(R.string.share_link), getString(R.string.qr_share))
+        android.app.AlertDialog.Builder(requireContext())
+            .setTitle(item.title)
+            .setItems(options) { _, which ->
+                if (which == 1) {
+                    com.cobalt.android.ui.common.QrShareDialogFragment.newInstance(item.watchUrl)
+                        .show(parentFragmentManager, com.cobalt.android.ui.common.QrShareDialogFragment.TAG)
+                } else {
+                    val intent = Intent(Intent.ACTION_SEND).apply {
+                        type = "text/plain"
+                        putExtra(Intent.EXTRA_TEXT, item.watchUrl)
+                    }
+                    startActivity(Intent.createChooser(intent, item.title))
+                }
+            }
+            .show()
     }
 
     override fun onDestroyView() {

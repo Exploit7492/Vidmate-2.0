@@ -44,7 +44,15 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         val contentRegion: String,
         val notificationsEnabled: Boolean,
         val notifyOnComplete: Boolean,
-        val recommendationsEnabled: Boolean
+        val recommendationsEnabled: Boolean,
+        val parallelSegments: Int,
+        val floatingPlayer: Boolean,
+        val onlineLyrics: Boolean,
+        val keepAliveNotice: Boolean,
+        val browserAntiDetection: Boolean,
+        val browserHistory: Boolean,
+        val hotfixEnabled: Boolean,
+        val contentLanguageRule: String
     )
 
     private val _state = MutableStateFlow(readState())
@@ -68,7 +76,15 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             contentRegion = settings.contentRegion,
             notificationsEnabled = settings.notificationsEnabled,
             notifyOnComplete = settings.notifyOnComplete,
-            recommendationsEnabled = settings.recommendationsEnabled
+            recommendationsEnabled = settings.recommendationsEnabled,
+            parallelSegments = settings.parallelSegments,
+            floatingPlayer = settings.floatingPlayerEnabled,
+            onlineLyrics = settings.onlineLyricsEnabled,
+            keepAliveNotice = settings.keepAliveNotice,
+            browserAntiDetection = settings.browserAntiDetection,
+            browserHistory = settings.browserHistoryEnabled,
+            hotfixEnabled = settings.hotfixEnabled,
+            contentLanguageRule = settings.contentLanguageRule
         )
     }
 
@@ -149,6 +165,47 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         } else {
             com.cobalt.android.recommend.RecommendationWorker.cancel(getApplication<Application>())
         }
+    }
+
+    fun setParallelSegments(value: Int) {
+        settings.parallelSegments = value
+        _state.value = _state.value.copy(parallelSegments = value)
+    }
+
+    fun setFloatingPlayer(value: Boolean) {
+        settings.floatingPlayerEnabled = value
+        _state.value = _state.value.copy(floatingPlayer = value)
+    }
+
+    fun setOnlineLyrics(value: Boolean) {
+        settings.onlineLyricsEnabled = value
+        _state.value = _state.value.copy(onlineLyrics = value)
+    }
+
+    fun setKeepAliveNotice(value: Boolean) {
+        settings.keepAliveNotice = value
+        _state.value = _state.value.copy(keepAliveNotice = value)
+    }
+
+    fun setBrowserAntiDetection(value: Boolean) {
+        settings.browserAntiDetection = value
+        _state.value = _state.value.copy(browserAntiDetection = value)
+    }
+
+    fun setBrowserHistory(value: Boolean) {
+        settings.browserHistoryEnabled = value
+        _state.value = _state.value.copy(browserHistory = value)
+    }
+
+    /** Enabling hot-fix loading is a security-relevant opt-in; off by default. */
+    fun setHotfixEnabled(value: Boolean) {
+        settings.hotfixEnabled = value
+        _state.value = _state.value.copy(hotfixEnabled = value)
+    }
+
+    fun setContentLanguageRule(value: String) {
+        settings.contentLanguageRule = value
+        _state.value = _state.value.copy(contentLanguageRule = value)
     }
 
     /** Folds in the old `SettingsSheet`'s "clear history" action (it cleared

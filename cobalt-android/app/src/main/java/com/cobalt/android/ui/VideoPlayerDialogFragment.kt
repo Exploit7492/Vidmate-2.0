@@ -22,6 +22,9 @@ import com.cobalt.android.R
 import com.cobalt.android.databinding.DialogVideoPlayerBinding
 import android.util.Log
 import com.cobalt.android.util.EqualizerController
+import com.cobalt.android.media.PlaybackPositionStore
+import com.cobalt.android.util.PermissionGuides
+import androidx.core.view.isVisible
 
 /**
  * Phase 8 — tap-to-play for completed downloads.
@@ -53,6 +56,9 @@ class VideoPlayerDialogFragment : DialogFragment() {
     // (Phase C6).
     private var mediaSession: MediaSession? = null
     private var subtitlesOn = true
+    private var positionStore: PlaybackPositionStore? = null
+    private var floatingWindow: FloatingPlayerWindow? = null
+    private var gestureFeedback: android.os.Handler? = null
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val dialog = Dialog(requireContext(), R.style.Theme_Cobalt_FullScreenDialog)
@@ -106,6 +112,73 @@ class VideoPlayerDialogFragment : DialogFragment() {
         setupEqualizer(exo)
         setupTracks(exo)
         setupMediaSession(exo)
+        setupResume(exo, uriString)
+        setupGestures(exo)
+        setupFloating(uriString)
+    }
+
+    /** Resume from the last watched position and keep saving it as we play. */
+    private fun setupResume(exo: ExoPlayer, uri: String) {
+        val store = PlaybackPositionStore(requireContext())
+        positionStore = store
+        val saved = store.positionMillis(uri)
+        if (saved > 0) {
+            exo.seekTo(saved)
+            android.widget.Toast.makeText(
+                requireContext(), "Resumed from ${saved / 60000}m", android.widget.Toast.LENGTH_SHORT
+            ).show()
+        }
+        exo.addListener(object : Player.Listener {
+            override fun onPlaybackStateChanged(state: Int) {
+                if (state == Player.STATE_ENDED) store.clear(uri)
+            }
+        })
+    }
+
+    /** Swipe to seek / change brightness or volume, with an on-screen readout. */
+    private fun setupGestures(exo: ExoPlayer) {
+        val handler = android.os.Handler(android.os.Looper.getMainLooper())
+        gestureFeedback = handler
+        val controller = PlayerGestureController(
+            context = requireContext(),
+            window = dialog?.window,
+            onSeek = { delta -> exo.seekTo((exo.currentPosition + delta).coerceIn(0, exo.duration.coerceAtLeast(0))) },
+            currentPosition = { exo.currentPosition },
+            duration = { exo.duration.coerceAtLeast(0) },
+            onFeedback = { text ->
+                binding.tvGestureFeedback.text = text
+                binding.tvGestureFeedback.isVisible = true
+                handler.removeCallbacksAndMessages(null)
+                handler.postDelayed({ _binding?.tvGestureFeedback?.isVisible = false }, 800)
+            }
+        )
+        binding.playerView.setOnTouchListener(controller)
+    }
+
+    /** The pop-up (overlay) player button — asks for the overlay permission first. */
+    private fun setupFloating(uri: String) {
+        val enabled = com.cobalt.android.util.SettingsRepository(requireContext()).floatingPlayerEnabled
+        binding.btnFloat.isVisible = enabled
+        if (!enabled) return
+        binding.btnFloat.setOnClickListener {
+            if (!PermissionGuides.canDrawOverlays(requireContext())) {
+                android.app.AlertDialog.Builder(requireContext())
+                    .setTitle("Allow pop-up player")
+                    .setMessage("Cobalt needs permission to display over other apps for the floating player.")
+                    .setPositiveButton("Open settings") { _, _ ->
+                        runCatching { startActivity(PermissionGuides.overlaySettingsIntent(requireContext())) }
+                    }
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .show()
+                return@setOnClickListener
+            }
+            val pos = player?.currentPosition ?: 0L
+            player?.pause()
+            val win = FloatingPlayerWindow(requireContext())
+            win.show(uri, pos)
+            floatingWindow = win
+            dismiss()
+        }
     }
 
     /**
@@ -241,11 +314,20 @@ class VideoPlayerDialogFragment : DialogFragment() {
 
     override fun onPause() {
         super.onPause()
-        player?.pause()
+        val p = player
+        if (p != null) {
+            positionStore?.save(
+                requireArguments().getString(ARG_URI).orEmpty(),
+                p.currentPosition,
+                p.duration.coerceAtLeast(0)
+            )
+            p.pause()
+        }
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
+        gestureFeedback?.removeCallbacksAndMessages(null)
         mediaSession?.release()
         mediaSession = null
         equalizer.detach()

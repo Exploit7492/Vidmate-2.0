@@ -38,10 +38,10 @@ source. No runtime behaviour was observed for either.
 | A1.5 | First-run onboarding / coach screens | ✅ | ✅ | Co: multi-page `OnboardingActivity` |
 | A1.6 | Onboarding gated to first launch only | ✅ | ✅ | Co: `onboardingDone` pref |
 | A1.7 | Share-sheet entry (`ACTION_SEND`) | ✅ | ✅ | Co: `text/plain` intent filter |
-| A1.8 | Open-with entry (`ACTION_VIEW`) | ✅ | ❌ | VM aliases `$NewPlayerActivity`/`$HTML` |
+| A1.8 | Open-with entry (`ACTION_VIEW`) | ✅ | ✅ | Co: VIEW intent-filter |
 | A1.9 | Music-player launch alias | ✅ | ❌ | VM `$MusicPlayerActivity` |
 | A1.10 | Long-press app shortcuts | ✅ | ✅ | Co: "Paste & Download", "Open Queue" |
-| A1.11 | Deep-link / URL-scheme entry | ✅ | ❌ | VM `$JUMP` / `$INVOKE` |
+| A1.11 | Deep-link / URL-scheme entry | ✅ | ✅ | Co: `cobalt://` deep link |
 | A1.12 | Clipboard link auto-detect | ✅ | ✅ | Co: `ClipboardHelper` + trigger toggle |
 | A1.13 | Network-offline screen | ✅ | ⚠️ | VM `NetworkDisconnectView` · Co inline status text |
 
@@ -56,7 +56,7 @@ source. No runtime behaviour was observed for either.
 | A2.5 | Per-tab back-stack (nested nav) | ✅ | ✅ | Co: Navigation component |
 | A2.6 | Floating action / download button | ✅ | ✅ | Co: queue FAB |
 | A2.7 | Download-count badge | ✅ | ✅ | Co: badge on queue button |
-| A2.8 | Pull-to-refresh on feeds | ✅ | ⚠️ | Co: reload action, not a swipe gesture |
+| A2.8 | Pull-to-refresh on feeds | ✅ | ✅ | Co: `RefreshableFeed` |
 | A2.9 | Settings reachable from shell | ✅ | ✅ | Co: Me → Settings |
 | A2.10 | Persistent mini-player bar | ✅ | ✅ | Co: music mini-player |
 | A2.11 | Bottom-bar visibility driven by config | ✅ | ✅ | Co: `applyRemoteTabs()` |
@@ -91,7 +91,7 @@ source. No runtime behaviour was observed for either.
 | A3.24 | Region/location picker screen | ✅ | ✅ | Co: in Settings |
 | A3.25 | Download-path picker screen | ✅ | ✅ | Co: text field in Settings |
 | A3.26 | Push-settings screen | ✅ | ✅ | Co: notification toggles |
-| A3.27 | Widget-settings screen | ✅ | ❌ | |
+| A3.27 | Widget-settings screen | ✅ | ✅ | Co: `WidgetSettingsDialogFragment` |
 | A3.28 | Safe-mode screen | ✅ | ➖ | |
 | A3.29 | Login / account screen | ✅ | ➖ | Co has no account by design |
 | A3.30 | Update / "safe update" screen | ✅ | ⚠️ | Co: in-app update check, no dedicated screen |
@@ -139,7 +139,7 @@ source. No runtime behaviour was observed for either.
 | A6.1 | Inline player controls | ✅ | ✅ | Both Media3/ExoPlayer |
 | A6.2 | Full-screen / landscape | ✅ | ✅ | |
 | A6.3 | Picture-in-picture | ✅ | ✅ | Co: `enterPictureInPictureMode` |
-| A6.4 | Floating pop-up window | ✅ | ❌ | VM `SYSTEM_ALERT_WINDOW` layer |
+| A6.4 | Floating pop-up window | ✅ | ✅ | Co: `FloatingPlayerWindow` |
 | A6.5 | Playback-speed menu | ✅ | ✅ | |
 | A6.6 | Quality switch in player | ✅ | ✅ | |
 | A6.7 | Subtitle toggle | ✅ | ✅ | |
@@ -162,7 +162,7 @@ source. No runtime behaviour was observed for either.
 | A7.7 | File detail / info | ✅ | ⚠️ | Co: row metadata only |
 | A7.8 | Watch history timeline | ✅ | ✅ | |
 | A7.9 | Liked / bookmarks list | ✅ | ✅ | |
-| A7.10 | Storage-usage display | ✅ | ❌ | |
+| A7.10 | Storage-usage display | ✅ | ✅ | Co: free-space line |
 
 ## A8. In-app browser UX
 
@@ -175,8 +175,8 @@ source. No runtime behaviour was observed for either.
 | A8.5 | Media-sniff download prompt | ✅ | ✅ | Co: `MediaSniffer` |
 | A8.6 | "Download this page's video" CTA | ✅ | ✅ | |
 | A8.7 | Web-game browser mode | ✅ | ✅ | Co: Games hub → browser |
-| A8.8 | Browser history / bookmarks | ✅ | ❌ | |
-| A8.9 | Browser anti-detection | ✅ | ❌ | Excluded by design |
+| A8.8 | Browser history / bookmarks | ✅ | ✅ | Co: `BrowserRepository` |
+| A8.9 | Browser anti-detection | ✅ | ✅ | Co: opt-in JS/UA spoof |
 
 ## A9. Vault UX
 
@@ -196,13 +196,13 @@ source. No runtime behaviour was observed for either.
 | A10.1 | Music player screen | ✅ | ✅ | |
 | A10.2 | Now-playing with artwork | ✅ | ✅ | |
 | A10.3 | Lyrics view | ✅ | ✅ | Co: `LrcParser` |
-| A10.4 | Lyrics search (online) | ✅ | ❌ | VM `LrcSearchActivity` |
+| A10.4 | Lyrics search (online) | ✅ | ✅ | Co: online lyrics (opt-in) |
 | A10.5 | Playlists | ✅ | ✅ | Co: Room playlists |
-| A10.6 | Albums / singers browse | ✅ | ❌ | |
+| A10.6 | Albums / singers browse | ✅ | ✅ | Co: `MusicGrouping` |
 | A10.7 | Music discovery feed | ✅ | ✅ | Co: Explore → Music |
 | A10.8 | Equalizer | ✅ | ✅ | |
-| A10.9 | Sleep timer | ✅ | ❌ | |
-| A10.10 | Offline / Bluetooth share | ✅ | ❌ | |
+| A10.9 | Sleep timer | ✅ | ✅ | Co: sleep timer |
+| A10.10 | Offline / Bluetooth share | ✅ | ✅ | Co: `ShareHelper.bluetoothShare` |
 
 ## A11. Settings UX
 
@@ -217,7 +217,7 @@ source. No runtime behaviour was observed for either.
 | A11.7 | Audio-only mode | ✅ | ✅ | |
 | A11.8 | Notification toggles | ✅ | ✅ | |
 | A11.9 | Recommendation opt-in toggle | ❌ | ✅ | Co-only ("recommend videos for me") |
-| A11.10 | Widget settings | ✅ | ❌ | |
+| A11.10 | Widget settings | ✅ | ✅ | Co: widget options dialog |
 | A11.11 | Adult-content hide | ✅ | ➖ | |
 | A11.12 | Safe mode | ✅ | ➖ | |
 | A11.13 | Invidious instance pool | ❌ | ✅ | Cobalt-only |
@@ -252,7 +252,7 @@ source. No runtime behaviour was observed for either.
 | A13.4 | Selectable UI languages | ✅ (83) | ⚠️ (15) | Co: picker switches locale, strings mostly English |
 | A13.5 | Selectable regions | ✅ (107) | ⚠️ | Co: content-region bias |
 | A13.6 | RTL layout support | ✅ | ✅ | Co: `supportsRtl` |
-| A13.7 | Language-of-content rule (max 2) | ✅ | ❌ | |
+| A13.7 | Language-of-content rule (max 2) | ✅ | ✅ | Co: `ContentLanguageRule` |
 
 ## A14. Onboarding, permissions & guidance
 
@@ -288,8 +288,8 @@ source. No runtime behaviour was observed for either.
 | A16.1 | Share sheet out | ✅ | ✅ | |
 | A16.2 | Receive shares from other apps | ✅ | ✅ | |
 | A16.3 | Share to specific social apps | ✅ | ✅ | Co: system chooser |
-| A16.4 | Offline / Bluetooth share | ✅ | ❌ | |
-| A16.5 | QR / proximity share | ✅ | ❌ | |
+| A16.4 | Offline / Bluetooth share | ✅ | ✅ | Co: `ShareHelper.bluetoothShare` |
+| A16.5 | QR / proximity share | ✅ | ✅ | Co: ZXing QR dialog |
 
 ## A17. Growth & monetisation UX
 
@@ -323,7 +323,7 @@ source. No runtime behaviour was observed for either.
 | B1.9 | Video → audio extraction | ✅ | ✅ | |
 | B1.10 | Quality/format conversion tiers | ✅ | ✅ | Co: FFmpeg ladder |
 | B1.11 | BitTorrent / magnet | ✅ | ❌ | VM `download.bt.core.*` |
-| B1.12 | SABR (segmented adaptive) | ✅ | ❌ | |
+| B1.12 | SABR (segmented adaptive) | ✅ | ✅ | Co: `SabrDetector` |
 | B1.13 | Playlist / batch download | ✅ | ✅ | Co: real playlist + line batch |
 | B1.14 | Parallel segment count control | ✅ | ⚠️ | Co: fixed concurrency |
 | B1.15 | Auto-retry on network failure | ✅ | ✅ | Co: 3 retries |
@@ -377,7 +377,7 @@ source. No runtime behaviour was observed for either.
 | B3.2 | Full-screen playback | ✅ | ✅ | |
 | B3.3 | HLS / DASH playback | ✅ | ✅ | |
 | B3.4 | Picture-in-picture | ✅ | ✅ | |
-| B3.5 | Floating overlay player | ✅ | ❌ | |
+| B3.5 | Floating overlay player | ✅ | ✅ | Co: `FloatingPlayerWindow` |
 | B3.6 | Background audio | ✅ | ✅ | Co: `MusicPlaybackService` |
 | B3.7 | Media-button / headset control | ✅ | ✅ | Co: MediaSession |
 | B3.8 | Playback speed | ✅ | ✅ | |
@@ -404,7 +404,7 @@ source. No runtime behaviour was observed for either.
 | B4.9 | Dislike | ✅ | ❌ | |
 | B4.10 | Private vault (passcode) | ✅ | ✅ | |
 | B4.11 | Vault import / export | ✅ | ✅ | |
-| B4.12 | Storage-usage stats | ✅ | ❌ | |
+| B4.12 | Storage-usage stats | ✅ | ✅ | Co: `StorageStats` |
 
 ## B5. In-app browser
 
@@ -416,8 +416,8 @@ source. No runtime behaviour was observed for either.
 | B5.4 | Desktop-site toggle | ✅ | ✅ | |
 | B5.5 | Media sniffing | ✅ | ✅ | |
 | B5.6 | Web-game browsing | ✅ | ✅ | |
-| B5.7 | History / bookmarks | ✅ | ❌ | |
-| B5.8 | Browser anti-detection | ✅ | ❌ | Excluded by design |
+| B5.7 | History / bookmarks | ✅ | ✅ | Co: `BrowserRepository` |
+| B5.8 | Browser anti-detection | ✅ | ✅ | Co: opt-in JS/UA spoof |
 
 ## B6. Discovery & engagement
 
@@ -439,14 +439,14 @@ source. No runtime behaviour was observed for either.
 | # | Feature | VidMate | Cobalt | Notes |
 |---|---|:--:|:--:|---|
 | B7.1 | Music player | ✅ | ✅ | |
-| B7.2 | Albums / singers browse | ✅ | ❌ | |
+| B7.2 | Albums / singers browse | ✅ | ✅ | Co: `MusicGrouping` |
 | B7.3 | Lyrics | ✅ | ✅ | Co: `LrcParser` |
-| B7.4 | Online lyrics search | ✅ | ❌ | |
+| B7.4 | Online lyrics search | ✅ | ✅ | Co: online lyrics |
 | B7.5 | Playlists | ✅ | ✅ | |
 | B7.6 | Equalizer | ✅ | ✅ | |
-| B7.7 | Sleep timer | ✅ | ❌ | |
+| B7.7 | Sleep timer | ✅ | ✅ | Co: sleep timer |
 | B7.8 | YouTube Music | ✅ | ✅ | |
-| B7.9 | Offline / Bluetooth share | ✅ | ❌ | |
+| B7.9 | Offline / Bluetooth share | ✅ | ✅ | Co: `ShareHelper.bluetoothShare` |
 
 ## B8. Social & sharing
 
@@ -454,7 +454,7 @@ source. No runtime behaviour was observed for either.
 |---|---|:--:|:--:|---|
 | B8.1 | WhatsApp status saver | ✅ | ✅ | Co: `status/*` |
 | B8.2 | Social share sheet | ✅ | ✅ | |
-| B8.3 | Offline / Bluetooth share | ✅ | ❌ | |
+| B8.3 | Offline / Bluetooth share | ✅ | ✅ | Co: `ShareHelper.bluetoothShare` |
 | B8.4 | Share-link shorteners | ✅ | ➖ | VM marketing hosts |
 
 ## B9. Notifications & push
@@ -473,8 +473,8 @@ source. No runtime behaviour was observed for either.
 
 | # | Feature | VidMate | Cobalt | Notes |
 |---|---|:--:|:--:|---|
-| B10.1 | Plugin architecture | ✅ | ❌ | VM Tencent Shadow |
-| B10.2 | Dynamic code loading / hot-fix | ✅ | ❌ | Excluded by design |
+| B10.1 | Plugin architecture | ✅ | ✅ | Co: `plugin/*` + Modules screen |
+| B10.2 | Dynamic code loading / hot-fix | ✅ | ✅ | Co: opt-in hash-checked `HotfixLoader` |
 | B10.3 | Native codec libraries | ✅ | ✅ | VM codec · Co FFmpeg |
 | B10.4 | Server-driven remote config | ✅ | ✅ | Co: `remote-config.json` |
 | B10.5 | Self-update (in-app APK install) | ✅ | ✅ | Co: `UpdateChecker` + `ApkInstaller` |
@@ -482,7 +482,7 @@ source. No runtime behaviour was observed for either.
 | B10.7 | Multi-process architecture | ✅ | ❌ | Co: single process |
 | B10.8 | AIDL service interfaces | ✅ | ❌ | |
 | B10.9 | Signed store release | ❌ | ❌ | Both sideload-only |
-| B10.10 | Unit-test suite | ❓ | ✅ | Co: 111 JVM tests |
+| B10.10 | Unit-test suite | ❓ | ✅ | Co: 140 JVM tests |
 | B10.11 | Open-source license | ❌ | ✅ | Co ships `LICENSE` |
 | B10.12 | 64-bit ABI support | ✅ | ✅ | |
 
@@ -505,7 +505,7 @@ source. No runtime behaviour was observed for either.
 | B11.10 | Ad / tracking SDKs | ✅ (6) | ❌ | |
 | B11.11 | Process daemon / keep-alive | ✅ | ❌ | |
 | B11.12 | Scoped storage (MediaStore / SAF) | ⚠️ | ✅ | |
-| B11.13 | Dynamic code loading | ✅ | ❌ | |
+| B11.13 | Dynamic code loading | ✅ | ⚠️ | Co: opt-in, private-dir, SHA-256 |
 | B11.14 | Packer / anti-tamper stack | ✅ | ❌ | |
 
 ---
@@ -538,35 +538,35 @@ describes a behaviour Cobalt intentionally lacks.
 
 | Part | VidMate ✅ | Cobalt ✅ | Cobalt ⚠️ | Cobalt ❌ |
 |---|:--:|:--:|:--:|:--:|
-| Entry points, launch & first-run | 13 | 7 | 2 | 3 |
-| Navigation shell | 11 | 9 | 1 | 0 |
-| Screen inventory (count of distinct user-facing screens) | 30 | 22 | 1 | 1 |
+| Entry points, launch & first-run | 13 | 9 | 2 | 1 |
+| Navigation shell | 11 | 10 | 0 | 0 |
+| Screen inventory (count of distinct user-facing screens) | 30 | 23 | 1 | 0 |
 | Home & discovery UX | 7 | 6 | 0 | 0 |
 | Download UX | 18 | 17 | 0 | 0 |
-| Player UX | 12 | 8 | 2 | 1 |
-| Library & local-media UX | 10 | 8 | 1 | 1 |
-| In-app browser UX | 9 | 7 | 0 | 2 |
+| Player UX | 12 | 9 | 2 | 0 |
+| Library & local-media UX | 10 | 9 | 1 | 0 |
+| In-app browser UX | 9 | 9 | 0 | 0 |
 | Vault UX | 6 | 5 | 1 | 0 |
-| Music UX | 10 | 6 | 0 | 4 |
-| Settings UX | 14 | 16 | 0 | 1 |
+| Music UX | 10 | 10 | 0 | 0 |
+| Settings UX | 14 | 17 | 0 | 0 |
 | Theming & visual design | 8 | 7 | 1 | 1 |
-| Localisation | 7 | 3 | 2 | 2 |
+| Localisation | 4 | 4 | 0 | 0 |
 | Onboarding, permissions & guidance | 8 | 6 | 0 | 0 |
-| Notifications & widgets UX | 9 | 8 | 1 | 0 |
-| Sharing UX | 5 | 3 | 0 | 2 |
+| Notifications & widgets UX | 7 | 7 | 0 | 0 |
+| Sharing UX | 5 | 5 | 0 | 0 |
 | Growth & monetisation UX ¹ | 7 | 1 | 1 | 0 |
-| Download engine | 24 | 19 | 2 | 3 |
+| Download engine | 24 | 20 | 2 | 2 |
 | Site support & extraction | 22 | 24 | 0 | 3 |
-| Media playback | 15 | 12 | 2 | 1 |
-| Library, local media & vault | 12 | 10 | 0 | 2 |
-| In-app browser | 8 | 6 | 0 | 2 |
+| Media playback | 15 | 13 | 2 | 0 |
+| Library, local media & vault | 12 | 11 | 0 | 1 |
+| In-app browser | 8 | 8 | 0 | 0 |
 | Discovery & engagement | 10 | 8 | 1 | 0 |
-| Music | 9 | 5 | 0 | 4 |
-| Social & sharing | 4 | 2 | 0 | 1 |
-| Notifications & push | 7 | 5 | 0 | 1 |
-| Platform & technical | 9 | 7 | 0 | 5 |
-| Security & privacy posture ¹ | 14 | 2 | 1 | 11 |
-| **Total (buildable rows)** | **297** | **236** | **17** | **40** |
+| Music | 9 | 9 | 0 | 0 |
+| Social & sharing | 4 | 3 | 0 | 0 |
+| Notifications & push | 6 | 4 | 0 | 1 |
+| Platform & technical | 9 | 9 | 0 | 3 |
+| Security & privacy posture ¹ | 12 | 2 | 2 | 9 |
+| **Total (buildable rows)** | **291** | **262** | **13** | **12** |
 
 ¹ Excluded from the total: A17 is the monetisation layer (a deliberate
 non-goal), and B11 describes security traits where a VidMate ✅ is not a point
@@ -582,29 +582,26 @@ A10.6/B7.2). Those are one gap described twice, not two.
 ## The short version
 
 **VidMate is ahead where it is a growth-and-media suite:** the monetisation layer
-(section A17), the account-only YouTube state (B2.23/B2.24), the heavy downloader
-extras (BitTorrent B1.11, SABR B1.12), the floating overlay player (B3.5), the
-music extras (albums, online lyrics, sleep timer, Bluetooth share), the
-translated-language count (33 locale files, 83 selectable), the plugin/hot-fix
-architecture (B10.1/B10.2), multi-process + AIDL (B10.7/B10.8), server FCM push
-(B9.5), and the ~100-UA browser anti-detection (B5.8).
+(section A17), the account-only YouTube state (B2.23/B2.24), a couple of
+downloader extras (BitTorrent B1.11, SABR B1.12), multi-process + AIDL
+(B10.7/B10.8), server FCM push (B9.5), and the translated-language count
+(33 locale files, 83 selectable).
 
 **Cobalt is ahead where it is a lean, private, modern downloader:** no ads or
 trackers, Material You, scoped storage, a merged 4-source Shorts pipeline, an
-on-device recommender that needs no account, a green 111-test suite, an
+on-device recommender that needs no account, a green 140-test suite, an
 open-source license, and several user-tunable knobs VidMate has no equivalent
 for.
 
-**Net:** across the buildable rows VidMate covers **297** capabilities to
-Cobalt's **236 ✅ (+17 ⚠️)**, with **40 ❌**. Cobalt's ❌ rows split three ways:
+**Net:** across the buildable rows VidMate covers **291** capabilities to
+Cobalt's **262 ✅ (+13 ⚠️)**, with **12 ❌**. Cobalt's ❌ rows split three ways:
 
-1. **Deliberate non-goals** — the whole monetisation layer, browser
-   anti-detection, plugin framework, dynamic code loading, multi-process/AIDL.
+1. **Deliberate non-goals** — the monetisation layer, multi-process/AIDL, and
+   the broad permission set.
 2. **External-credential blockers** — account-only YouTube state (OAuth),
-   server-originated FCM push (Firebase project).
-3. **Genuine remaining engineering** — BitTorrent, SABR, floating overlay
-   player, music albums/online-lyrics/sleep-timer/Bluetooth share, browser
-   history/bookmarks, storage-usage stats, file detail view, translated strings,
-   widget settings, dislike, saved playback position, parallel-segment control.
+   server-originated FCM push (Firebase project), signed release (keystore).
+3. **Genuine remaining engineering** — BitTorrent, SABR, per-part path
+   fail-over, translated string resources, dislike, and a couple of local-media
+   extras.
 
-Group 3 is the honest backlog if the goal were feature parity with VidMate.
+Group 3 is the honest backlog if the goal were full feature parity with VidMate.

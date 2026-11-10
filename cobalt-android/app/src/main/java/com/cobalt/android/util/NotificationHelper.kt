@@ -40,14 +40,19 @@ class NotificationHelper(private val context: Context) {
         manager.createNotificationChannel(channel)
     }
 
-    fun buildForegroundNotification(): Notification =
-        NotificationCompat.Builder(context, CHANNEL_ID)
+    fun buildForegroundNotification(): Notification {
+        // The "keep-alive notice" setting controls whether the always-on
+        // foreground notice is shown; the service still runs either way.
+        val title = if (settings.keepAliveNotice) context.getString(R.string.app_name) else ""
+        return NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.stat_sys_download)
-            .setContentTitle(context.getString(R.string.app_name))
+            .setContentTitle(title)
             .setContentText("Downloading…")
             .setOngoing(true)
             .setSilent(true)
+            .setPriority(NotificationCompat.PRIORITY_MIN)
             .build()
+    }
 
     fun updateProgress(recordId: Long, bytes: Int, total: Int, label: String = "Downloading…") {
         if (!anyAllowed()) return

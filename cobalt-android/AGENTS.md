@@ -73,7 +73,7 @@ Landing zone for new surfaces (all verified BUILD SUCCESSFUL):
 
 Testing pattern that works well here: keep new logic pure and Android-free
 (e.g. `MediaSniffer`, `LocalMediaQuery`, `ResolveFailureAdvisor`) so it gets real
-JVM unit tests under `app/src/test/java/com/cobalt/android/`. Current suite: 111
+JVM unit tests under `app/src/test/java/com/cobalt/android/`. Current suite: 140
 tests, 0 failures. The newest batch covers the "use InnerTube fully" work and the
 recommender: `feed/explore/ExploreParserTest`, `feed/explore/PlaylistIdTest`,
 `recommend/TasteProfileTest`, plus the updated `UrlMatcherTest` (catch-all).
@@ -97,3 +97,34 @@ user uploaded from Termux. Attempts to mirror-clone the upstream
 `OH_GIT_CREDENTIAL_ACCESS_TOKEN_GITHUB` is `Bad credentials`. Until a working
 Zapier-codes credential is supplied, work stays local to this uploaded tree —
 do not assume a fetch/push target exists.
+
+## VidMate-parity round (latest, all green)
+Everything below builds (`:app:assembleDebug`) and the suite passes (140 tests):
+- Player: resume position store (`media/PlaybackPositionStore.kt`), gesture
+  controls (`ui/PlayerGestureController.kt`: swipe-seek, edge brightness/volume),
+  floating overlay player (`ui/FloatingPlayerWindow.kt`, gated on
+  `settings.floatingPlayerEnabled` + overlay permission).
+- Permission guides (`util/PermissionGuides.kt`) for overlay and all-files.
+- Storage: `util/StorageStats.kt` (free-space line in the queue header,
+  file-detail size). Music tags/grouping: `media/MusicMetadata.kt`,
+  `ui/music/MusicGrouping.kt` (group-by-album/artist; `idOf` is injectable so it
+  is unit-testable off-device).
+- Share: `util/ShareHelper.kt` (text/file/Bluetooth), QR share
+  (`util/QrCodeGenerator.kt` + `ui/common/QrShareDialogFragment.kt`, ZXing).
+- Offline + refresh: `util/NetworkMonitor.kt`, `ui/common/OfflineScreen.kt`,
+  `ui/common/PullToRefreshBox.kt` (`RefreshableFeed`).
+- Content-language rule: `util/ContentLanguageRule.kt` + `util/LanguageDetector.kt`
+  (script-based, Android-free), applied to the Home feed in `HomeViewModel`.
+- Update: `update/UpdateChecker.kt` (config-driven, download + system installer).
+- Plugin framework: `plugin/*` + `assets/plugins/index.json` +
+  `ui/settings/PluginsScreen.kt` (Modules list). Hot-fix: `hotfix/HotfixLoader.kt`
+  — private-dir only, SHA-256-verified, `settings.hotfixEnabled` (default off).
+- Widget: `util/WidgetSettings.kt` (count/progress/compact/animated),
+  `widget/WidgetPresenter.kt` (pure text logic, JVM-tested), options dialog
+  `ui/settings/WidgetSettingsDialogFragment.kt` reached from Settings.
+- Share: `ShareHelper.shareUri` shares a completed download's MediaStore URI;
+  `share`/`Bluetooth` actions on each complete row in `DownloadsScreen`.
+
+Keep the pure-logic-and-JVM-test pattern: `LanguageDetector`, `MusicGrouping`
+(injected id lookup), `StorageStats`, `PluginRegistry`, `ContentLanguageRule`,
+`WidgetPresenter` all have real tests, no Android framework needed.

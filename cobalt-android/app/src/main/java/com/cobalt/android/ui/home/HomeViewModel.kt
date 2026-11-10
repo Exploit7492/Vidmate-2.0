@@ -9,6 +9,9 @@ import com.cobalt.android.feed.FeedRepository
 import com.cobalt.android.feed.model.FeedItem
 import com.cobalt.android.feed.source.InnertubeStreamResolver
 import com.cobalt.android.link.LinkResolverRepository
+import com.cobalt.android.util.ContentLanguageRule
+import com.cobalt.android.util.LanguageDetector
+import com.cobalt.android.util.SettingsRepository
 import kotlinx.coroutines.launch
 
 /**
@@ -35,6 +38,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private val streamResolver = InnertubeStreamResolver()
     private val commentsRepository = com.cobalt.android.feed.comments.CommentsRepository()
     private val resolver = LinkResolverRepository(application)
+    private val settings = SettingsRepository(application)
 
     // ── Feed state ──────────────────────────────────────────────────────────
 
@@ -67,7 +71,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             _isLoadingFeed.value = true
             val page = feedRepository.loadFeed()
-            _feed.value = page.items
+            _feed.value = applyLanguageRule(page.items)
             _isFeedFromCache.value = page.isFromCache
             _isLoadingFeed.value = false
         }
@@ -82,7 +86,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             // items rather than replacing the list under the user's thumb.
             val existing = _feed.value.orEmpty()
             val existingIds = existing.map { it.videoId }.toHashSet()
-            val merged = existing + page.items.filter { it.videoId !in existingIds }
+            val merged = existing + applyLanguageRule(page.items.filter { it.videoId !in existingIds })
             _feed.value = merged
             _isFeedFromCache.value = page.isFromCache
             _isLoadingFeed.value = false
@@ -95,6 +99,28 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
      * resolve clears the spinner and leaves [nowPlaying] null — the tile
      * stays tappable and the download path remains available.
      */
+    /**
+     * Drops items whose detected language violates the user's content-language
+     * rule ("single"/"max2"). The running set is seeded from what is already
+     * shown so a refresh cannot re-introduce a third language. Items the
+     * detector cannot classify ("und") are always kept — the rule trims noise,
+     * it must never hide something it cannot judge.
+     */
+    private fun applyLanguageRule(items: List<FeedItem>): List<FeedItem> {
+        val rule = settings.contentLanguageRule
+        val preferred = settings.preferredContentLanguage
+        if (rule == ContentLanguageRule.ANY || preferred.isBlank()) return items
+        val seen = mutableSetOf(preferred.lowercase())
+        return items.filter { item ->
+            val tag = LanguageDetector.detect(item.title)
+            if (tag == LanguageDetector.UNDETERMINED) true
+            else if (ContentLanguageRule.allowsItem(rule, preferred, tag, seen)) {
+                seen += tag.substringBefore('-').lowercase()
+                true
+            } else false
+        }
+    }
+
     fun onFeedItemClick(item: FeedItem) {
         if (item.streamUrl != null) {
             _nowPlaying.value = item

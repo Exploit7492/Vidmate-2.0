@@ -8,22 +8,8 @@ package com.cobalt.android.util
  */
 object RegionHelper {
 
-    val SUPPORTED = listOf(
-        "" to "unspecified",
-        "US" to "United States",
-        "GB" to "United Kingdom",
-        "IN" to "India",
-        "BR" to "Brazil",
-        "ID" to "Indonesia",
-        "NG" to "Nigeria",
-        "DE" to "Germany",
-        "FR" to "France",
-        "JP" to "Japan",
-        "KR" to "South Korea",
-        "MX" to "Mexico",
-        "PH" to "Philippines",
-        "PK" to "Pakistan",
-        "BD" to "Bangladesh",
-        "ZA" to "South Africa"
-    )
+    /** The content regions offered in Settings: unspecified plus the full
+     *  [LanguageCatalog] region list (107 regions). */
+    val SUPPORTED: List<Pair<String, String>> =
+        listOf("" to "unspecified") + LanguageCatalog.REGIONS
 }

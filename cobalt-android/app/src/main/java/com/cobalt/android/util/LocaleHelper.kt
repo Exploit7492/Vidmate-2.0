@@ -13,28 +13,14 @@ import androidx.core.os.LocaleListCompat
  */
 object LocaleHelper {
 
-    /** A small, curated list of UI languages to offer in Settings. The app's
-     *  own strings are English today, but selecting a language here is a real,
-     *  persisted, system-integrated preference (and the hook a translation
-     *  pass would plug into). */
-    val SUPPORTED = listOf(
-        "" to "system default",
-        "en" to "English",
-        "hi" to "हिन्दी (Hindi)",
-        "es" to "Español",
-        "pt" to "Português",
-        "ar" to "العربية",
-        "id" to "Bahasa Indonesia",
-        "ru" to "Русский",
-        "fr" to "Français",
-        "de" to "Deutsch",
-        "bn" to "বাংলা (Bengali)",
-        "ur" to "اردو",
-        "tr" to "Türkçe",
-        "vi" to "Tiếng Việt",
-        "th" to "ไทย",
-        "zh-CN" to "中文（简体）"
-    )
+    /**
+     * The UI languages offered in Settings: the system default plus the full
+     * [LanguageCatalog] (83 languages), so a translation pass has every slot
+     * already wired. Selecting a language is a real, persisted,
+     * system-integrated preference (`AppCompatDelegate.setApplicationLocales`).
+     */
+    val SUPPORTED: List<Pair<String, String>> =
+        listOf("" to "system default") + LanguageCatalog.LANGUAGES
 
     fun apply(tag: String) {
         val locales = if (tag.isBlank()) {

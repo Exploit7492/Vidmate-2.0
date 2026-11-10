@@ -16,9 +16,14 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
+import androidx.lifecycle.lifecycleScope
 import com.cobalt.android.R
+import com.cobalt.android.db.BrowserRepository
+import com.cobalt.android.link.LinkResolverRepository
+import com.cobalt.android.util.SettingsRepository
 import com.cobalt.android.databinding.FragmentBrowserBinding
 import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.launch
 
 /**
  * A real in-app browser (Phase F1/F4/F5).
@@ -53,6 +58,8 @@ class BrowserFragment : Fragment() {
     private val tabs = mutableListOf<String?>()
     private var activeTab = 0
     private var incognito = false
+    private lateinit var settings: SettingsRepository
+    private lateinit var browserRepo: BrowserRepository
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -64,6 +71,8 @@ class BrowserFragment : Fragment() {
     @SuppressLint("SetJavaScriptEnabled")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        settings = SettingsRepository(requireContext())
+        browserRepo = BrowserRepository(requireContext())
 
         with(binding.webView.settings) {
             javaScriptEnabled = true
@@ -72,6 +81,12 @@ class BrowserFragment : Fragment() {
             useWideViewPort = true
             mediaPlaybackRequiresUserGesture = true
         }
+        // Anti-detection (B7): present as an ordinary mobile browser, not as a
+        // downloader. Overridable per-device in Settings.
+        if (settings.browserAntiDetection) {
+            binding.webView.settings.userAgentString =
+                settings.browserUserAgent.ifBlank { DEFAULT_MOBILE_UA }
+        }
         binding.webView.webViewClient = sniffingClient()
 
         binding.btnBack.setOnClickListener {
@@ -79,6 +94,7 @@ class BrowserFragment : Fragment() {
         }
         binding.btnDesktop.setOnClickListener { toggleDesktopMode() }
         binding.btnDownload.setOnClickListener { offerSniffed() }
+        binding.btnMenu.setOnClickListener { showBrowserMenu() }
         binding.btnTabs.setOnClickListener { showTabs() }
         binding.btnIncognito.setOnClickListener { toggleIncognito() }
         binding.etAddress.setOnEditorActionListener { _, _, _ ->
@@ -225,10 +241,96 @@ class BrowserFragment : Fragment() {
             binding.progress.visibility = View.VISIBLE
             binding.etAddress.setText(url)
             sniffer.clear() // candidates belong to one page
+            if (!incognito && settings.browserHistoryEnabled && url.startsWith("http")) {
+                viewLifecycleOwner.lifecycleScope.launch {
+                    runCatching { browserRepo.recordVisit(url, view.title.orEmpty()) }
+                }
+            }
         }
 
         override fun onPageFinished(view: WebView, url: String) {
             binding.progress.visibility = View.GONE
+            // JS/WebView-driven extraction (C3): scan the rendered DOM for
+            // media the request sniffer may have missed (blob/MSE, lazy sources).
+            if (settings.browserAntiDetection) applyAntiDetection(view)
+            view.evaluateJavascript(SNIFF_JS) { result ->
+                runCatching {
+                    org.json.JSONArray(result ?: "[]").let { arr ->
+                        for (i in 0 until arr.length()) {
+                            val u = arr.optString(i)
+                            if (u.isNotBlank()) sniffer.observe(u, null)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun applyAntiDetection(view: WebView) {
+        // Hide the WebView/automation tells the way a normal browser does, and
+        // stub out the JS hooks sites use to fingerprint a downloader.
+        view.evaluateJavascript(ANTI_DETECT_JS, null)
+    }
+
+    private fun showBrowserMenu() {
+        val items = listOf(
+            getString(R.string.browser_history),
+            getString(R.string.browser_bookmarks),
+            getString(R.string.browser_bookmark),
+            getString(R.string.browser_clear_history)
+        )
+        AlertDialog.Builder(requireContext())
+            .setItems(items.toTypedArray()) { _, which ->
+                when (which) {
+                    0 -> showHistory()
+                    1 -> showBookmarks()
+                    2 -> bookmarkCurrent()
+                    3 -> viewLifecycleOwner.lifecycleScope.launch {
+                        runCatching { browserRepo.clearHistory() }
+                        Snackbar.make(binding.root, "History cleared", Snackbar.LENGTH_SHORT).show()
+                    }
+                }
+            }
+            .show()
+    }
+
+    private fun showHistory() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            val rows = runCatching { browserRepo.recentHistory() }.getOrDefault(emptyList())
+            val labels = rows.map { it.title.ifBlank { it.url } }
+            if (labels.isEmpty()) {
+                Snackbar.make(binding.root, "No history yet", Snackbar.LENGTH_SHORT).show()
+                return@launch
+            }
+            AlertDialog.Builder(requireContext())
+                .setTitle(R.string.browser_history)
+                .setItems(labels.toTypedArray()) { _, which -> load(rows[which].url) }
+                .show()
+        }
+    }
+
+    private fun showBookmarks() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            val rows = runCatching { browserRepo.bookmarks() }.getOrDefault(emptyList())
+            val labels = rows.map { it.title.ifBlank { it.url } }
+            if (labels.isEmpty()) {
+                Snackbar.make(binding.root, "No bookmarks yet", Snackbar.LENGTH_SHORT).show()
+                return@launch
+            }
+            AlertDialog.Builder(requireContext())
+                .setTitle(R.string.browser_bookmarks)
+                .setItems(labels.toTypedArray()) { _, which -> load(rows[which].url) }
+                .show()
+        }
+    }
+
+    private fun bookmarkCurrent() {
+        val url = binding.webView.url ?: return
+        if (!url.startsWith("http")) return
+        val title = binding.webView.title.orEmpty()
+        viewLifecycleOwner.lifecycleScope.launch {
+            runCatching { browserRepo.addBookmark(url, title) }
+            Snackbar.make(binding.root, "Bookmarked", Snackbar.LENGTH_SHORT).show()
         }
     }
 
@@ -241,6 +343,28 @@ class BrowserFragment : Fragment() {
 
     companion object {
         private const val ARG_URL = "url"
+        private const val DEFAULT_MOBILE_UA =
+            "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) " +
+                "Chrome/120.0.0.0 Mobile Safari/537.36"
+
+        /** Scans the live DOM for media URLs (C3). Returns a JSON array of strings. */
+        private const val SNIFF_JS = """(function(){try{
+          var out=[];var push=function(u){if(u&&out.indexOf(u)<0&&/\.(m3u8|mpd|mp4|webm|mkv|mp3|m4a)(\?|$)/i.test(u))out.push(u);};
+          var og=document.querySelector('meta[property=\"og:video\"],meta[property=\"og:video:url\"],meta[property=\"og:video:secure_url\"]');
+          if(og)push(og.content);
+          document.querySelectorAll('video,source').forEach(function(e){if(e.src)push(e.src);if(e.currentSrc)push(e.currentSrc);});
+          document.querySelectorAll('[data-src],[data-video]').forEach(function(e){push(e.getAttribute('data-src'));push(e.getAttribute('data-video'));});
+          return JSON.stringify(out);
+        }catch(e){return '[]';}})()"""
+
+        /** Neutralises the most common automation/fingerprint tells (B7). */
+        private const val ANTI_DETECT_JS = """(function(){try{
+          Object.defineProperty(navigator,'webdriver',{get:function(){return false;}});
+          Object.defineProperty(navigator,'languages',{get:function(){return ['en-US','en'];}});
+          Object.defineProperty(navigator,'plugins',{get:function(){return [1,2,3];}});
+          if(!window.chrome){window.chrome={runtime:{}};}
+        }catch(e){}})()"""
+
         private const val DESKTOP_UA =
             "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) " +
                 "Chrome/120.0.0.0 Safari/537.36"

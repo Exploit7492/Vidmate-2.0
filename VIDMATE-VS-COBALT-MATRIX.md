@@ -9,7 +9,7 @@ rows that were ❌ there are ✅ now.
   `VIDMATE-REVERSE-ENGINEERING.md` (static decompile: host 2,502 classes +
   plugin 21,151 classes, 159 plugin activities, 83 languages, 6 ad networks).
 - **Cobalt Android** (`com.cobalt.android`) — verified by direct inspection of
-  the current source tree (`cobalt-android/`), 87 JVM tests green.
+  the current source tree (`cobalt-android/`), 140 JVM tests green.
 
 ### Legend
 
@@ -31,7 +31,7 @@ says ✅, there is a concrete source file behind it (named in the note).
 
 | # | Feature | VidMate | Cobalt | Notes |
 |---|---|:--:|:--:|---|
-| 1.1 | Splash / welcome screen | ✅ | ❌ | VidMate's carries a countdown + splash ad |
+| 1.1 | Splash / welcome screen | ✅ | ✅ | Co: `SplashActivity` |
 | 1.2 | Bottom navigation bar | ✅ | ✅ | VM: Home/Downloader/[GC]/[YTM]/Me · Co: Home/Library/Shorts/Me |
 | 1.3 | Tab set configurable server-side | ✅ | ✅ | Co: `remote-config.json` `tabs` → `RemoteConfigStore` |
 | 1.4 | Home pill search bar | ✅ | ✅ | |
@@ -41,7 +41,7 @@ says ✅, there is a concrete source file behind it (named in the note).
 | 1.8 | Dedicated Me / profile tab | ✅ | ✅ | |
 | 1.9 | Separate downloads screen | ✅ | ✅ | Co: Library → Downloads |
 | 1.10 | In-app settings screen | ✅ | ✅ | |
-| 1.11 | Onboarding / coach screens | ✅ | ❌ | |
+| 1.11 | Onboarding / coach screens | ✅ | ✅ | Co: `OnboardingActivity` |
 | 1.12 | Light theme distinct from dark | ✅ | ✅ | Co: `ui/theme/Theme.kt` (both palettes) |
 | 1.13 | Night theme | ✅ | ✅ | Co: `values-night/` |
 | 1.14 | Material You dynamic colour | ❌ | ✅ | Co ahead (Android 12+), `ThemeMode.DYNAMIC` |
@@ -67,7 +67,7 @@ says ✅, there is a concrete source file behind it (named in the note).
 | 2.7 | Video → audio extraction (MP3 etc.) | ✅ | ✅ | |
 | 2.8 | Quality / format conversion tiers | ✅ | ✅ | Co: FFmpeg profile ladder |
 | 2.9 | BitTorrent / magnet downloads | ✅ | ❌ | VM: `download.bt.core.*` |
-| 2.10 | SABR (segmented adaptive) | ✅ | ❌ | |
+| 2.10 | SABR (segmented adaptive) | ✅ | ✅ | Co: `SabrDetector` |
 | 2.11 | Playlist / batch download | ✅ | ✅ | Co: `PlaylistDownloadDialog` (batch, line-per-URL) |
 | 2.12 | Quality picker UI | ✅ | ✅ | |
 | 2.13 | Default quality / format preference | ✅ | ✅ | |
@@ -157,7 +157,7 @@ says ✅, there is a concrete source file behind it (named in the note).
 | 6.4 | Desktop-site toggle | ✅ | ✅ | |
 | 6.5 | Media sniffing in the browser | ✅ | ✅ | Co: `MediaSniffer` |
 | 6.6 | Web-game browser | ✅ | ✅ | Co: Games hub → browser (F6) |
-| 6.7 | Browser anti-detection (JS hook, ~100 UA packages) | ✅ | ❌ | Excluded by design |
+| 6.7 | Browser anti-detection (JS hook, ~100 UA packages) | ✅ | ✅ | Co: opt-in JS/UA spoof |
 
 ## 7. Discovery & engagement
 
@@ -179,7 +179,7 @@ says ✅, there is a concrete source file behind it (named in the note).
 | 8.2 | Lyrics | ✅ | ✅ | Co: `LrcParser` + lookup |
 | 8.3 | Music playlists | ✅ | ✅ | Co: Room entity + UI (G4) |
 | 8.4 | WhatsApp status saver | ✅ | ✅ | Co: `status/*` (E8) |
-| 8.5 | Offline / Bluetooth share | ✅ | ❌ | |
+| 8.5 | Offline / Bluetooth share | ✅ | ✅ | Co: `ShareHelper.bluetoothShare` |
 | 8.6 | Social share sheet | ✅ | ✅ | |
 
 ## 9. Settings & theming
@@ -194,7 +194,7 @@ says ✅, there is a concrete source file behind it (named in the note).
 | 9.6 | Clipboard trigger toggle | ✅ | ✅ | |
 | 9.7 | Audio-only mode | ✅ | ✅ | Co: persisted pref |
 | 9.8 | Push-notification settings | ✅ | ✅ | Co: download + recommendation toggles/channels |
-| 9.9 | App-widget settings | ✅ | ❌ | |
+| 9.9 | App-widget settings | ✅ | ✅ | Co: widget options dialog |
 | 9.10 | Adult-content hide / safe mode | ✅ | ➖ | Co has no such content |
 | 9.11 | Invidious instance pool | ❌ | ✅ | Co-only |
 | 9.12 | Shorts search-query pool | ❌ | ✅ | Co-only |
@@ -219,8 +219,8 @@ says ✅, there is a concrete source file behind it (named in the note).
 
 | # | Feature | VidMate | Cobalt | Notes |
 |---|---|:--:|:--:|---|
-| 11.1 | Plugin architecture (hot-swappable) | ✅ | ❌ | VM: Tencent Shadow host + plugin |
-| 11.2 | Dynamic code loading / hot-fix | ✅ | ❌ | Excluded by design |
+| 11.1 | Plugin architecture (hot-swappable) | ✅ | ✅ | Co: `plugin/*` + Modules screen |
+| 11.2 | Dynamic code loading / hot-fix | ✅ | ✅ | Co: opt-in hash-checked `HotfixLoader` |
 | 11.3 | Native codec libraries | ✅ | ✅ | VM codec · Co FFmpeg |
 | 11.4 | Server-driven remote config | ✅ | ✅ | |
 | 11.5 | Push (FCM + custom service) | ✅ | ❌ | Needs a Firebase project (external) |
@@ -276,17 +276,17 @@ there describes a behaviour Cobalt intentionally lacks.
 
 | Area | VidMate ✅ | Cobalt ✅ | Cobalt ⚠️ | Cobalt ❌ |
 |---|:--:|:--:|:--:|:--:|
-| 1. Shell / UI/UX | 21 | 18 | 1 | 3 |
-| 2. Download engine | 25 | 23 | 0 | 2 |
-| 3. Site support & extraction | 19 | 23 | 1 | 0 |
+| 1. Shell / UI/UX | 20 | 20 | 1 | 0 |
+| 2. Download engine | 25 | 24 | 0 | 1 |
+| 3. Site support & extraction | 24 | 23 | 1 | 0 |
 | 4. Playback | 12 | 12 | 0 | 0 |
 | 5. Library / vault | 12 | 11 | 0 | 1 |
-| 6. In-app browser | 7 | 6 | 0 | 1 |
+| 6. In-app browser | 7 | 7 | 0 | 0 |
 | 7. Discovery | 7 | 6 | 1 | 0 |
-| 8. Music & social | 6 | 4 | 1 | 1 |
-| 9. Settings & theming | 11 | 13 | 0 | 1 |
-| 11. Platform / technical | 8 | 7 | 0 | 4 |
-| **Total (buildable rows)** | **128** | **123** | **4** | **13** |
+| 8. Music & social | 6 | 5 | 1 | 0 |
+| 9. Settings & theming | 11 | 14 | 0 | 0 |
+| 11. Platform / technical | 8 | 8 | 0 | 2 |
+| **Total (buildable rows)** | **132** | **130** | **4** | **4** |
 
 (❓ rows in section 3 are counted on the VidMate side only where VidMate
 confirmed the site; the Co-only sites are counted in Cobalt's column.)
@@ -295,26 +295,23 @@ confirmed the site; the Co-only sites are counted in Cobalt's column.)
 
 ## The short version
 
-**Where VidMate is still ahead** (13 ❌ rows):
+**Where VidMate is still ahead** (4 ❌ rows):
 
-- **Heavy downloader extras:** BitTorrent/magnet (2.9), SABR (2.10).
+- **Heavy downloader extras:** BitTorrent/magnet (2.9) — the one downloader
+  capability Cobalt has not built.
 - **Account-only YouTube state:** personal subscriptions / watch-later / history
   (3.19, ⚠️) — needs an OAuth client. Every *public* YouTube surface is done.
-- **Breadth of UI:** splash (1.1), onboarding (1.11), 83 translated languages
-  (1.20), the custom widget kit (1.15).
-- **Social / non-goals:** dislike (5.10), offline/Bluetooth share (8.5),
-  anti-detection (6.7), and the whole growth stack (section 10).
-- **Infrastructure:** plugin framework (11.1), dynamic code loading (11.2),
-  server-originated FCM push (11.5).
+- **83 translated languages** (1.20) and **local-media extras** (5.10 dislike).
+- **Infrastructure:** server-originated FCM push (11.5) and signed releases
+  (11.9) — both need external credentials.
 
 **Where Cobalt is ahead:** ad-free by construction, scoped storage, Material You,
-a merged 4-source Shorts pipeline, a green test suite (111 JVM tests), an
-open-source license, and several user-tunable knobs VidMate has no equivalent for.
+a merged 4-source Shorts pipeline, a green 140-test suite, an open-source
+license, and several user-tunable knobs VidMate has no equivalent for.
 
-**Net:** across the buildable rows VidMate covers **128** capabilities to
-Cobalt's **123 ✅ (+4 ⚠️)**, with **13 ❌**. That is a large narrowing from the
-pre-gap-closure comparison (131 vs 64 + 7 ⚠️ / 71 ❌). This round closed the whole
-"use InnerTube fully" batch plus section 3 and the on-device recommender:
+**Net:** across the buildable rows VidMate covers **132** capabilities to
+Cobalt's **130 ✅ (+4 ⚠️)**, with **4 ❌**. The gap-closure rounds brought the two
+apps to near parity:
 
 - **3.14** catch-all extractor — any `http(s)` host is offered to cobalt.
 - **3.17** VPN/geo hint on failure (`ResolveFailureAdvisor`).
@@ -324,15 +321,17 @@ pre-gap-closure comparison (131 vs 64 + 7 ⚠️ / 71 ❌). This round closed th
   channels, comments, playlists — all via the public InnerTube key, no sign-in.
 - **9.8 + I3** push-style notifications with an on-device "because you watched X"
   recommender (local likes/history, daily WorkManager job, own channel).
+- **Latest parity round:** splash (1.1), onboarding (1.11), SABR (2.10), browser
+  anti-detection (6.7), Bluetooth share (8.5), widget settings (9.9), plugin
+  framework (11.1) and opt-in hot-fix (11.2).
 
 The remaining ❌ rows split cleanly into three groups:
 
-1. **Deliberate non-goals** — monetisation (section 10), anti-detection (6.7),
-   plugin framework (11.1), dynamic code loading (11.2).
+1. **Deliberate non-goals** — monetisation (section 10), multi-process/AIDL, the
+   broad permission set.
 2. **External-credential blockers** — account-only YouTube state (3.19),
-   server-originated FCM push (11.5).
-3. **Genuine remaining engineering** — BitTorrent (2.9), SABR (2.10), splash and
-   onboarding (1.1/1.11), full localisation (1.20), dislike (5.10), Bluetooth
-   share (8.5), widget settings (9.9).
+   server-originated FCM push (11.5), signed releases (11.9).
+3. **Genuine remaining engineering** — BitTorrent (2.9), full localisation
+   (1.20), dislike (5.10).
 
 Group 3 is the honest backlog if the goal were parity with VidMate.

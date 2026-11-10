@@ -44,6 +44,13 @@ class SettingsFragment : Fragment() {
                 onHistoryClick = {
                     HistoryFragment.newInstance().show(parentFragmentManager, HistoryFragment.TAG)
                 },
+                onPluginsClick = {
+                    PluginsDialogFragment.newInstance().show(parentFragmentManager, PluginsDialogFragment.TAG)
+                },
+                onWidgetSettingsClick = {
+                    WidgetSettingsDialogFragment.newInstance()
+                        .show(parentFragmentManager, WidgetSettingsDialogFragment.TAG)
+                },
                 onBatteryClick = {
                     startActivity(
                         Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {

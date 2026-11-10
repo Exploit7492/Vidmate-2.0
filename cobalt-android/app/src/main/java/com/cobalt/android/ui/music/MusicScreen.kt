@@ -47,7 +47,9 @@ fun MusicScreen(
     onPrevious: () -> Unit,
     onPlayPlaylist: (MusicPlaylist) -> Unit = {},
     onDeletePlaylist: (Long) -> Unit = {},
-    onCreatePlaylist: (String) -> Unit = {}
+    onCreatePlaylist: (String) -> Unit = {},
+    onSetSleepTimer: (Int) -> Unit = {},
+    onShare: (LocalMediaItem) -> Unit = {}
 ) {
     Column(
         Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).padding(12.dp)
@@ -76,7 +78,17 @@ fun MusicScreen(
             onDelete = onDeletePlaylist,
             onCreate = onCreatePlaylist
         )
+        SleepTimerRow(state.sleepTimerEndsAt, onSetSleepTimer)
         Spacer(Modifier.height(10.dp))
+        var groupMode by remember { mutableStateOf(0) } // 0 = tracks, 1 = albums, 2 = artists
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            TextButton(onClick = { groupMode = (groupMode + 1) % 3 }) {
+                Text(
+                    when (groupMode) { 1 -> "by album"; 2 -> "by artist"; else -> "all tracks" },
+                    fontSize = 12.sp
+                )
+            }
+        }
         val visible = state.visible
         if (state.loading) {
             Text("scanning…", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
@@ -86,12 +98,74 @@ fun MusicScreen(
             Text("no music on this device", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
             return
         }
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            itemsIndexed(visible, key = { _, it -> it.uri }) { index, track ->
-                TrackRow(track, selected = track.uri == state.current?.uri) { onPlay(index) }
+        if (groupMode == 0) {
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                itemsIndexed(visible, key = { _, it -> it.uri }) { index, track ->
+                    TrackRow(track, selected = track.uri == state.current?.uri,
+                        onClick = { onPlay(index) }, onLongClick = { onShare(track) })
+                }
+            }
+        } else {
+            val groups = if (groupMode == 1) MusicGrouping.byAlbum(visible, state.tags)
+            else MusicGrouping.byArtist(visible, state.tags)
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                groups.forEach { group ->
+                    item(key = "h_" + group.title) {
+                        Text(
+                            group.title + if (group.subtitle.isNotBlank()) " · ${group.subtitle}" else "",
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 13.sp,
+                            modifier = Modifier.padding(top = 10.dp, bottom = 2.dp)
+                        )
+                    }
+                    itemsIndexed(group.tracks, key = { _, it -> it.uri }) { _, track ->
+                        TrackRow(track, selected = track.uri == state.current?.uri,
+                            onClick = { onPlay(visible.indexOfFirst { it.uri == track.uri }) },
+                            onLongClick = { onShare(track) })
+                    }
+                }
             }
         }
     }
+}
+
+/** Sleep-timer control (G7): tap to pick a duration; shows the remaining time. */
+@Composable
+private fun SleepTimerRow(endsAt: Long, onSet: (Int) -> Unit) {
+    var picking by remember { mutableStateOf(false) }
+    val options = listOf(0, 5, 15, 30, 60, 90)
+    if (picking) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { picking = false },
+            title = { Text("Sleep timer") },
+            text = {
+                Column {
+                    options.forEach { minutes ->
+                        Text(
+                            if (minutes == 0) "Off" else "$minutes minutes",
+                            fontSize = 13.sp,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onSet(minutes); picking = false }
+                                .padding(vertical = 8.dp)
+                        )
+                    }
+                }
+            },
+            confirmButton = { TextButton(onClick = { picking = false }) { Text("close") } }
+        )
+    }
+    val remaining = if (endsAt > System.currentTimeMillis())
+        " · stops in ${(endsAt - System.currentTimeMillis()) / 60000}m" else ""
+    Text(
+        "sleep timer$remaining",
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        fontSize = 12.sp,
+        modifier = Modifier
+            .padding(top = 4.dp)
+            .clickable { picking = true }
+    )
 }
 
 /**
@@ -198,12 +272,18 @@ private fun MiniTransport(
     }
 }
 
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
-private fun TrackRow(track: LocalMediaItem, selected: Boolean, onClick: () -> Unit) {
+private fun TrackRow(
+    track: LocalMediaItem,
+    selected: Boolean,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit = {}
+) {
     Column(
         Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick)
             .background(
                 if (selected) MaterialTheme.colorScheme.primaryContainer
                 else MaterialTheme.colorScheme.surfaceVariant

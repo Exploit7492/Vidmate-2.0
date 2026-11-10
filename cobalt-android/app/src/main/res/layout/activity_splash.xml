@@ -11,6 +11,13 @@
         android:orientation="vertical"
         android:gravity="center">
 
+        <ImageView
+            android:layout_width="112dp"
+            android:layout_height="112dp"
+            android:layout_marginBottom="16dp"
+            android:contentDescription="@string/app_name"
+            android:src="@drawable/vidmate_logo" />
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

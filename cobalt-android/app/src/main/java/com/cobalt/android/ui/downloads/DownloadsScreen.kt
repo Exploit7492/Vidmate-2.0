@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LinearProgressIndicator
@@ -22,6 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -51,9 +53,13 @@ fun DownloadsScreen(
     onCancel: (DownloadRecord) -> Unit,
     onPlay: (DownloadRecord) -> Unit,
     onClear: () -> Unit = {},
+    onShare: (DownloadRecord) -> Unit = {},
+    onShareBluetooth: (DownloadRecord) -> Unit = {},
+    freeSpaceText: String = "",
     modifier: Modifier = Modifier
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
+    var detail by remember { mutableStateOf<DownloadRecord?>(null) }
     val records = if (selectedTab == 0) activeRecords else historyRecords
 
     Column(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
@@ -62,6 +68,15 @@ fun DownloadsScreen(
                 text = { Text("active") })
             Tab(selected = selectedTab == 1, onClick = { selectedTab = 1 },
                 text = { Text("history") })
+        }
+
+        if (freeSpaceText.isNotBlank()) {
+            Text(
+                text = freeSpaceText,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontSize = 11.sp,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
+            )
         }
 
         if (selectedTab == 1 && records.isNotEmpty()) {
@@ -91,12 +106,18 @@ fun DownloadsScreen(
         } else {
             LazyColumn(Modifier.fillMaxSize().padding(12.dp)) {
                 items(records, key = { it.id }) { record ->
-                    DownloadRow(record, onRetry, onCancel, onPlay)
+                    DownloadRow(
+                        record, onRetry, onCancel, onPlay,
+                        onInfo = { detail = record },
+                        onShare = onShare,
+                        onShareBluetooth = onShareBluetooth
+                    )
                     Spacer(Modifier.height(10.dp))
                 }
             }
         }
     }
+    detail?.let { FileDetailDialog(it) { detail = null } }
 }
 
 @Composable
@@ -104,7 +125,10 @@ private fun DownloadRow(
     record: DownloadRecord,
     onRetry: (DownloadRecord) -> Unit,
     onCancel: (DownloadRecord) -> Unit,
-    onPlay: (DownloadRecord) -> Unit
+    onPlay: (DownloadRecord) -> Unit,
+    onInfo: (DownloadRecord) -> Unit,
+    onShare: (DownloadRecord) -> Unit,
+    onShareBluetooth: (DownloadRecord) -> Unit
 ) {
     Column(
         Modifier
@@ -163,7 +187,15 @@ private fun DownloadRow(
             DownloadStatus.COMPLETE -> {
                 val mb = if (record.totalBytes > 0) "%.1f MB · ".format(record.totalBytes / 1_048_576.0) else ""
                 StatusText("${mb}saved")
-                RowAction("open") { onPlay(record) }
+                Row {
+                    RowAction("open") { onPlay(record) }
+                    Spacer(Modifier.width(16.dp))
+                    RowAction("info") { onInfo(record) }
+                    Spacer(Modifier.width(16.dp))
+                    RowAction("share") { onShare(record) }
+                    Spacer(Modifier.width(16.dp))
+                    RowAction("Bluetooth") { onShareBluetooth(record) }
+                }
             }
             DownloadStatus.FAILED -> {
                 StatusText("failed")

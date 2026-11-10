@@ -20,6 +20,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -45,6 +46,8 @@ fun SettingsScreen(
     onBack: () -> Unit = {},
     onHistoryClick: () -> Unit = {},
     onBatteryClick: () -> Unit = {},
+    onPluginsClick: () -> Unit = {},
+    onWidgetSettingsClick: () -> Unit = {},
     onRecreate: () -> Unit = {}
 ) {
     val state by viewModel.state.collectAsState()
@@ -145,6 +148,50 @@ fun SettingsScreen(
             )
 
             Spacer(Modifier.height(24.dp))
+            SectionLabel("download engine")
+            StepperRow(
+                label = "parallel segments",
+                value = state.parallelSegments,
+                min = 1, max = 16,
+                onChange = viewModel::setParallelSegments
+            )
+
+            Spacer(Modifier.height(24.dp))
+            SectionLabel("player")
+            ToggleRow("floating (pop-up) player", state.floatingPlayer, viewModel::setFloatingPlayer)
+            ToggleRow("online lyrics search", state.onlineLyrics, viewModel::setOnlineLyrics)
+
+            Spacer(Modifier.height(24.dp))
+            SectionLabel("notifications")
+            ToggleRow("keep-alive notice", state.keepAliveNotice, viewModel::setKeepAliveNotice)
+
+            Spacer(Modifier.height(24.dp))
+            SectionLabel("browser")
+            ToggleRow("hide downloader identity (anti-detection)", state.browserAntiDetection, viewModel::setBrowserAntiDetection)
+            ToggleRow("record browser history", state.browserHistory, viewModel::setBrowserHistory)
+
+            Spacer(Modifier.height(24.dp))
+            SectionLabel("content language rule")
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf("any" to "any", "single" to "single", "max2" to "max 2").forEach { (value, label) ->
+                    FilterChip(
+                        selected = state.contentLanguageRule == value,
+                        onClick = { viewModel.setContentLanguageRule(value) },
+                        label = { Text(label) }
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(24.dp))
+            SectionLabel("home-screen widget")
+            ActionRow("widget settings", onWidgetSettingsClick)
+
+            Spacer(Modifier.height(24.dp))
+            SectionLabel("advanced")
+            ToggleRow("allow hot-fix modules (dynamic code)", state.hotfixEnabled, viewModel::setHotfixEnabled)
+            ActionRow("manage modules", onPluginsClick)
+
+            Spacer(Modifier.height(24.dp))
             SectionLabel("actions")
             ActionRow("history & likes", onHistoryClick)
             ActionRow("clear download history", viewModel::clearDownloadHistory)
@@ -237,6 +284,19 @@ private fun ToggleRow(label: String, checked: Boolean, onCheckedChange: (Boolean
             modifier = Modifier.weight(1f)
         )
         Switch(checked = checked, onCheckedChange = onCheckedChange)
+    }
+}
+
+@Composable
+private fun StepperRow(label: String, value: Int, min: Int, max: Int, onChange: (Int) -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(label, color = MaterialTheme.colorScheme.onSurface, fontSize = 13.sp, modifier = Modifier.weight(1f))
+        TextButton(onClick = { onChange((value - 1).coerceAtLeast(min)) }) { Text("\u2212") }
+        Text("$value", color = MaterialTheme.colorScheme.onSurface, fontSize = 14.sp)
+        TextButton(onClick = { onChange((value + 1).coerceAtMost(max)) }) { Text("+") }
     }
 }
 

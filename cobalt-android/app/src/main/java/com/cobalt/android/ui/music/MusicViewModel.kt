@@ -6,6 +6,9 @@ import androidx.lifecycle.viewModelScope
 import com.cobalt.android.media.LocalMediaItem
 import com.cobalt.android.media.LocalMediaQuery
 import com.cobalt.android.media.LocalMediaRepository
+import com.cobalt.android.media.MusicMetadata
+import com.cobalt.android.music.OnlineLyricsSource
+import com.cobalt.android.util.SettingsRepository
 import com.cobalt.android.download.DownloadDatabase
 import com.cobalt.android.music.MusicPlaylist
 import com.cobalt.android.music.MusicPlaylistDao
@@ -26,6 +29,8 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository = LocalMediaRepository(application)
     private val playlistDao = DownloadDatabase.getInstance(application).musicPlaylistDao()
+    private val settings = SettingsRepository(application)
+    private val onlineLyrics = OnlineLyricsSource()
 
     data class UiState(
         val tracks: List<LocalMediaItem> = emptyList(),
@@ -34,7 +39,10 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         val loading: Boolean = true,
         val search: String = "",
         val lyrics: List<LrcParser.Line> = emptyList(),
-        val playlists: List<MusicPlaylist> = emptyList()
+        val playlists: List<MusicPlaylist> = emptyList(),
+        val tags: Map<Long, MusicMetadata.Tags> = emptyMap(),
+        /** Epoch millis when the sleep timer should stop playback, or 0. */
+        val sleepTimerEndsAt: Long = 0L
     ) {
         val current: LocalMediaItem? get() = tracks.getOrNull(currentIndex)
         val visible: List<LocalMediaItem>
@@ -52,7 +60,8 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     private fun load() {
         viewModelScope.launch {
             val audio = repository.load().filter { it.kind == LocalMediaRepository.Kind.AUDIO }
-            _state.value = _state.value.copy(tracks = audio, loading = false)
+            val tags = runCatching { MusicMetadata.load(getApplication()) }.getOrDefault(emptyMap())
+            _state.value = _state.value.copy(tracks = audio, tags = tags, loading = false)
         }
     }
 
@@ -97,7 +106,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         val filtered = _state.value.tracks.filter { it.uri in wanted }
         if (filtered.isEmpty()) return
         _state.value = _state.value.copy(tracks = filtered, currentIndex = 0, playing = true)
-        loadLyrics(filtered.first().uri)
+        loadLyrics(filtered.first())
     }
 
     /** Selects a track by its position within the *visible* (filtered) list. */
@@ -121,7 +130,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun setCurrent(index: Int) {
         _state.value = _state.value.copy(currentIndex = index, playing = true)
-        loadLyrics(_state.value.tracks.getOrNull(index)?.uri)
+        _state.value.tracks.getOrNull(index)?.let { loadLyrics(it) }
     }
 
     /**
@@ -130,14 +139,48 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
      * sibling path to guess — so this silently yields no lyrics otherwise
      * rather than pretending to fetch them.
      */
-    private fun loadLyrics(uri: String?) {
-        val path = uri?.takeIf { it.startsWith("file://") }?.removePrefix("file://")
-        val lines = if (path == null) emptyList() else {
+    private fun loadLyrics(item: LocalMediaItem) {
+        val uri = item.uri
+        val path = uri.takeIf { it.startsWith("file://") }?.removePrefix("file://")
+        val local = if (path == null) emptyList() else {
             val lrc = java.io.File(path.substringBeforeLast('.') + ".lrc")
             if (lrc.exists()) runCatching { LrcParser.parse(lrc.readText()) }.getOrDefault(emptyList())
             else emptyList()
         }
-        _state.value = _state.value.copy(lyrics = lines)
+        if (local.isNotEmpty() || !settings.onlineLyricsEnabled) {
+            _state.value = _state.value.copy(lyrics = local)
+            return
+        }
+        _state.value = _state.value.copy(lyrics = emptyList())
+        // Online fallback (G2): fetch plain lyrics keyed by title + artist.
+        viewModelScope.launch {
+            val tags = _state.value.tags[MusicMetadata.idOf(uri)]
+            val title = item.displayName.substringBeforeLast('.')
+            val text = runCatching {
+                onlineLyrics.fetch(title, tags?.artist.orEmpty(), item.durationMs / 1000)
+            }.getOrNull()
+            if (!text.isNullOrBlank() && _state.value.current?.uri == uri) {
+                _state.value = _state.value.copy(lyrics = LrcParser.parse(text))
+            }
+        }
+    }
+
+    /** Starts (minutes > 0) or cancels (0) the music sleep timer (G7). */
+    fun setSleepTimer(minutes: Int) {
+        val endsAt = if (minutes > 0) System.currentTimeMillis() + minutes * 60_000L else 0L
+        settings.sleepTimerMinutes = minutes
+        _state.value = _state.value.copy(sleepTimerEndsAt = endsAt)
+    }
+
+    /** Called by the fragment's ticker; true when the timer has elapsed. */
+    fun sleepTimerElapsed(): Boolean {
+        val ends = _state.value.sleepTimerEndsAt
+        return ends in 1..System.currentTimeMillis()
+    }
+
+    fun stopForSleep() {
+        _state.value = _state.value.copy(playing = false, sleepTimerEndsAt = 0L)
+        settings.sleepTimerMinutes = 0
     }
 
     fun togglePlay() {

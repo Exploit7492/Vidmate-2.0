@@ -24,7 +24,7 @@ Every row from `VIDMATE-VS-COBALT-FULL.md`, flattened into a single list. Legend
 | 18 | Navigation shell | Per-tab back-stack (nested nav) | ✅ | ✅ | Co: Navigation component |
 | 19 | Navigation shell | Floating action / download button | ✅ | ✅ | Co: queue FAB |
 | 20 | Navigation shell | Download-count badge | ✅ | ✅ | Co: badge on queue button |
-| 21 | Navigation shell | Pull-to-refresh on feeds | ✅ | ⚠️ | Co: reload action, not a swipe gesture |
+| 21 | Navigation shell | Pull-to-refresh on feeds | ✅ | ✅ | Co: `RefreshableFeed` (Material3 gesture) |
 | 22 | Navigation shell | Settings reachable from shell | ✅ | ✅ | Co: Me → Settings |
 | 23 | Navigation shell | Persistent mini-player bar | ✅ | ✅ | Co: music mini-player |
 | 24 | Navigation shell | Bottom-bar visibility driven by config | ✅ | ✅ | Co: `applyRemoteTabs()` |
@@ -87,15 +87,15 @@ Every row from `VIDMATE-VS-COBALT-FULL.md`, flattened into a single list. Legend
 | 81 | Player UX | Inline player controls | ✅ | ✅ | Both Media3/ExoPlayer |
 | 82 | Player UX | Full-screen / landscape | ✅ | ✅ |  |
 | 83 | Player UX | Picture-in-picture | ✅ | ✅ | Co: `enterPictureInPictureMode` |
-| 84 | Player UX | Floating pop-up window | ✅ | ❌ | VM `SYSTEM_ALERT_WINDOW` layer |
+| 84 | Player UX | Floating pop-up window | ✅ | ✅ | Co: `FloatingPlayerWindow` (opt-in) |
 | 85 | Player UX | Playback-speed menu | ✅ | ✅ |  |
 | 86 | Player UX | Quality switch in player | ✅ | ✅ |  |
 | 87 | Player UX | Subtitle toggle | ✅ | ✅ |  |
 | 88 | Player UX | Equalizer panel | ✅ | ✅ | Co: `EqualizerController` |
 | 89 | Player UX | Pre-roll ad | ✅ | ➖ | VM `pre_rolls_ad` |
-| 90 | Player UX | Gesture controls (seek/brightness) | ✅ | ⚠️ | Co: basic seek bar |
+| 90 | Player UX | Gesture controls (seek/brightness) | ✅ | ✅ | Co: `PlayerGestureController` |
 | 91 | Player UX | Next/prev in a Shorts feed | ✅ | ✅ | Co: preloads next Short |
-| 92 | Player UX | Resume playback position | ✅ | ⚠️ | Co: per-session, not persisted |
+| 92 | Player UX | Resume playback position | ✅ | ✅ | Co: `PlaybackPositionStore` (persisted) |
 | 93 | Library & local-media UX | Downloads list with thumbnails | ✅ | ✅ |  |
 | 94 | Library & local-media UX | Local video library grid | ✅ | ✅ | Co: MediaStore scan |
 | 95 | Library & local-media UX | Local music library | ✅ | ✅ |  |
@@ -105,7 +105,7 @@ Every row from `VIDMATE-VS-COBALT-FULL.md`, flattened into a single list. Legend
 | 99 | Library & local-media UX | File detail / info | ✅ | ⚠️ | Co: row metadata only |
 | 100 | Library & local-media UX | Watch history timeline | ✅ | ✅ |  |
 | 101 | Library & local-media UX | Liked / bookmarks list | ✅ | ✅ |  |
-| 102 | Library & local-media UX | Storage-usage display | ✅ | ❌ |  |
+| 102 | Library & local-media UX | Storage-usage display | ✅ | ✅ | Co: free-space line in queue |
 | 103 | In-app browser UX | Browser with URL bar | ✅ | ✅ |  |
 | 104 | In-app browser UX | Multi-tab UI | ✅ | ✅ |  |
 | 105 | In-app browser UX | Incognito toggle | ✅ | ✅ |  |
@@ -113,8 +113,8 @@ Every row from `VIDMATE-VS-COBALT-FULL.md`, flattened into a single list. Legend
 | 107 | In-app browser UX | Media-sniff download prompt | ✅ | ✅ | Co: `MediaSniffer` |
 | 108 | In-app browser UX | "Download this page's video" CTA | ✅ | ✅ |  |
 | 109 | In-app browser UX | Web-game browser mode | ✅ | ✅ | Co: Games hub → browser |
-| 110 | In-app browser UX | Browser history / bookmarks | ✅ | ❌ |  |
-| 111 | In-app browser UX | Browser anti-detection | ✅ | ❌ | Excluded by design |
+| 110 | In-app browser UX | Browser history / bookmarks | ✅ | ✅ | Co: `BrowserRepository` |
+| 111 | In-app browser UX | Browser anti-detection | ✅ | ✅ | Co: opt-in JS/UA spoof |
 | 112 | Vault UX | Passcode gate | ✅ | ✅ | Co: vault passcode screen |
 | 113 | Vault UX | Create-passcode first-run flow | ✅ | ✅ |  |
 | 114 | Vault UX | Import into vault | ✅ | ✅ | Co: SAF picker |
@@ -124,13 +124,13 @@ Every row from `VIDMATE-VS-COBALT-FULL.md`, flattened into a single list. Legend
 | 118 | Music UX | Music player screen | ✅ | ✅ |  |
 | 119 | Music UX | Now-playing with artwork | ✅ | ✅ |  |
 | 120 | Music UX | Lyrics view | ✅ | ✅ | Co: `LrcParser` |
-| 121 | Music UX | Lyrics search (online) | ✅ | ❌ | VM `LrcSearchActivity` |
+| 121 | Music UX | Lyrics search (online) | ✅ | ✅ | Co: online lyrics (opt-in) |
 | 122 | Music UX | Playlists | ✅ | ✅ | Co: Room playlists |
-| 123 | Music UX | Albums / singers browse | ✅ | ❌ |  |
+| 123 | Music UX | Albums / singers browse | ✅ | ✅ | Co: `MusicGrouping` |
 | 124 | Music UX | Music discovery feed | ✅ | ✅ | Co: Explore → Music |
 | 125 | Music UX | Equalizer | ✅ | ✅ |  |
-| 126 | Music UX | Sleep timer | ✅ | ❌ |  |
-| 127 | Music UX | Offline / Bluetooth share | ✅ | ❌ |  |
+| 126 | Music UX | Sleep timer | ✅ | ✅ | Co: music sleep timer |
+| 127 | Music UX | Offline / Bluetooth share | ✅ | ✅ | Co: `ShareHelper.bluetoothShare` |
 | 128 | Settings UX | Theme picker | ✅ | ✅ |  |
 | 129 | Settings UX | Language picker | ✅ | ✅ |  |
 | 130 | Settings UX | Region / content-locale picker | ✅ | ✅ |  |
@@ -140,7 +140,7 @@ Every row from `VIDMATE-VS-COBALT-FULL.md`, flattened into a single list. Legend
 | 134 | Settings UX | Audio-only mode | ✅ | ✅ |  |
 | 135 | Settings UX | Notification toggles | ✅ | ✅ |  |
 | 136 | Settings UX | Recommendation opt-in toggle | ❌ | ✅ | Co-only ("recommend videos for me") |
-| 137 | Settings UX | Widget settings | ✅ | ❌ |  |
+| 137 | Settings UX | Widget settings | ✅ | ✅ | Co: `WidgetSettingsDialogFragment` |
 | 138 | Settings UX | Adult-content hide | ✅ | ➖ |  |
 | 139 | Settings UX | Safe mode | ✅ | ➖ |  |
 | 140 | Settings UX | Invidious instance pool | ❌ | ✅ | Cobalt-only |
@@ -165,7 +165,7 @@ Every row from `VIDMATE-VS-COBALT-FULL.md`, flattened into a single list. Legend
 | 159 | Localisation | Selectable UI languages | ✅ (83) | ⚠️ (15) | Co: picker switches locale, strings mostly English |
 | 160 | Localisation | Selectable regions | ✅ (107) | ⚠️ | Co: content-region bias |
 | 161 | Localisation | RTL layout support | ✅ | ✅ | Co: `supportsRtl` |
-| 162 | Localisation | Language-of-content rule (max 2) | ✅ | ❌ |  |
+| 162 | Localisation | Language-of-content rule (max 2) | ✅ | ✅ | Co: `ContentLanguageRule` + detector |
 | 163 | Onboarding, permissions & guidance | First-run walkthrough | ✅ | ✅ |  |
 | 164 | Onboarding, permissions & guidance | Notification-permission explainer | ✅ | ✅ | Co: request + rationale |
 | 165 | Onboarding, permissions & guidance | Overlay-permission guide | ✅ | ➖ | VM floating window |
@@ -186,8 +186,8 @@ Every row from `VIDMATE-VS-COBALT-FULL.md`, flattened into a single list. Legend
 | 180 | Sharing UX | Share sheet out | ✅ | ✅ |  |
 | 181 | Sharing UX | Receive shares from other apps | ✅ | ✅ |  |
 | 182 | Sharing UX | Share to specific social apps | ✅ | ✅ | Co: system chooser |
-| 183 | Sharing UX | Offline / Bluetooth share | ✅ | ❌ |  |
-| 184 | Sharing UX | QR / proximity share | ✅ | ❌ |  |
+| 183 | Sharing UX | Offline / Bluetooth share | ✅ | ✅ | Co: `ShareHelper.bluetoothShare` |
+| 184 | Sharing UX | QR / proximity share | ✅ | ✅ | Co: ZXing QR dialog |
 | 185 | Growth & monetisation UX | In-app app store (9Apps) | ✅ | ➖ |  |
 | 186 | Growth & monetisation UX | Game centre / web games | ✅ | ⚠️ | Co: games portal hub only |
 | 187 | Growth & monetisation UX | Earn-cash / wallet UX | ✅ | ➖ |  |
@@ -293,27 +293,27 @@ Every row from `VIDMATE-VS-COBALT-FULL.md`, flattened into a single list. Legend
 | 287 | Discovery & engagement | Recommendation engine ("because you watched") | ✅ | ✅ | Co: on-device, opt-in |
 | 288 | Discovery & engagement | Adult-content filter | ✅ | ➖ |  |
 | 289 | Music | Music player | ✅ | ✅ |  |
-| 290 | Music | Albums / singers browse | ✅ | ❌ |  |
+| 290 | Music | Albums / singers browse | ✅ | ✅ | Co: `MusicGrouping` |
 | 291 | Music | Lyrics | ✅ | ✅ | Co: `LrcParser` |
-| 292 | Music | Online lyrics search | ✅ | ❌ |  |
+| 292 | Music | Online lyrics search | ✅ | ✅ | Co: online lyrics (opt-in) |
 | 293 | Music | Playlists | ✅ | ✅ |  |
 | 294 | Music | Equalizer | ✅ | ✅ |  |
-| 295 | Music | Sleep timer | ✅ | ❌ |  |
+| 295 | Music | Sleep timer | ✅ | ✅ | Co: music sleep timer |
 | 296 | Music | YouTube Music | ✅ | ✅ |  |
-| 297 | Music | Offline / Bluetooth share | ✅ | ❌ |  |
+| 297 | Music | Offline / Bluetooth share | ✅ | ✅ | Co: `ShareHelper.bluetoothShare` |
 | 298 | Social & sharing | WhatsApp status saver | ✅ | ✅ | Co: `status/*` |
 | 299 | Social & sharing | Social share sheet | ✅ | ✅ |  |
-| 300 | Social & sharing | Offline / Bluetooth share | ✅ | ❌ |  |
+| 300 | Social & sharing | Offline / Bluetooth share | ✅ | ✅ | Co: `ShareHelper.bluetoothShare` |
 | 301 | Social & sharing | Share-link shorteners | ✅ | ➖ | VM marketing hosts |
 | 302 | Notifications & push | Download notifications | ✅ | ✅ |  |
 | 303 | Notifications & push | Music notifications | ✅ | ✅ |  |
 | 304 | Notifications & push | Recommendation notifications | ✅ | ✅ | Co: local, on-device |
 | 305 | Notifications & push | Separate channels | ✅ | ✅ |  |
 | 306 | Notifications & push | Server-originated push (FCM) | ✅ | ❌ | Needs Firebase project |
-| 307 | Notifications & push | Keep-alive / resident notice | ✅ | ➖ |  |
+| 307 | Notifications & push | Keep-alive / resident notice | ✅ | ✅ | Co: foreground service notice (opt-out) |
 | 308 | Notifications & push | App widgets | ✅ (3) | ✅ (1) |  |
-| 309 | Platform & technical | Plugin architecture | ✅ | ❌ | VM Tencent Shadow |
-| 310 | Platform & technical | Dynamic code loading / hot-fix | ✅ | ❌ | Excluded by design |
+| 309 | Platform & technical | Plugin architecture | ✅ | ✅ | Co: `plugin/*` + Modules screen |
+| 310 | Platform & technical | Dynamic code loading / hot-fix | ✅ | ✅ | Co: opt-in, hash-checked `HotfixLoader` |
 | 311 | Platform & technical | Native codec libraries | ✅ | ✅ | VM codec · Co FFmpeg |
 | 312 | Platform & technical | Server-driven remote config | ✅ | ✅ | Co: `remote-config.json` |
 | 313 | Platform & technical | Self-update (in-app APK install) | ✅ | ✅ | Co: `UpdateChecker` + `ApkInstaller` |
@@ -336,7 +336,7 @@ Every row from `VIDMATE-VS-COBALT-FULL.md`, flattened into a single list. Legend
 | 330 | Security & privacy posture | Ad / tracking SDKs | ✅ (6) | ❌ |  |
 | 331 | Security & privacy posture | Process daemon / keep-alive | ✅ | ❌ |  |
 | 332 | Security & privacy posture | Scoped storage (MediaStore / SAF) | ⚠️ | ✅ |  |
-| 333 | Security & privacy posture | Dynamic code loading | ✅ | ❌ |  |
+| 333 | Security & privacy posture | Dynamic code loading | ✅ | ⚠️ | Co: opt-in, private-dir, SHA-256 |
 | 334 | Security & privacy posture | Packer / anti-tamper stack | ✅ | ❌ |  |
 
 
@@ -351,21 +351,21 @@ is not a point in VidMate's favour.
 | Part | VidMate ✅ | Cobalt ✅ | Cobalt ⚠️ | Cobalt ❌ |
 |---|:--:|:--:|:--:|:--:|
 | Entry points, launch & first-run | 13 | 7 | 2 | 3 |
-| Navigation shell | 11 | 9 | 1 | 0 |
+| Navigation shell | 11 | 10 | 0 | 0 |
 | Screen inventory (count of distinct user-facing screens) | 30 | 22 | 1 | 1 |
 | Home & discovery UX | 7 | 6 | 0 | 0 |
 | Download UX | 18 | 17 | 0 | 0 |
-| Player UX | 12 | 8 | 2 | 1 |
-| Library & local-media UX | 10 | 8 | 1 | 1 |
-| In-app browser UX | 9 | 7 | 0 | 2 |
+| Player UX | 12 | 11 | 0 | 0 |
+| Library & local-media UX | 10 | 9 | 1 | 0 |
+| In-app browser UX | 9 | 9 | 0 | 0 |
 | Vault UX | 6 | 5 | 1 | 0 |
-| Music UX | 10 | 6 | 0 | 4 |
-| Settings UX | 14 | 16 | 0 | 1 |
+| Music UX | 10 | 10 | 0 | 0 |
+| Settings UX | 14 | 17 | 0 | 0 |
 | Theming & visual design | 8 | 7 | 1 | 1 |
-| Localisation | 7 | 3 | 2 | 2 |
+| Localisation | 7 | 4 | 2 | 1 |
 | Onboarding, permissions & guidance | 8 | 6 | 0 | 0 |
 | Notifications & widgets UX | 9 | 8 | 1 | 0 |
-| Sharing UX | 5 | 3 | 0 | 2 |
+| Sharing UX | 5 | 5 | 0 | 0 |
 | Growth & monetisation UX ¹ | 7 | 1 | 1 | 0 |
 | Download engine | 24 | 19 | 2 | 3 |
 | Site support & extraction | 22 | 24 | 0 | 3 |
@@ -373,12 +373,12 @@ is not a point in VidMate's favour.
 | Library, local media & vault | 12 | 10 | 0 | 2 |
 | In-app browser | 8 | 6 | 0 | 2 |
 | Discovery & engagement | 10 | 8 | 1 | 0 |
-| Music | 9 | 5 | 0 | 4 |
-| Social & sharing | 4 | 2 | 0 | 1 |
-| Notifications & push | 7 | 5 | 0 | 1 |
-| Platform & technical | 9 | 7 | 0 | 5 |
-| Security & privacy posture ¹ | 14 | 2 | 1 | 11 |
-| **Total (buildable rows)** | **297** | **236** | **17** | **40** |
+| Music | 9 | 9 | 0 | 0 |
+| Social & sharing | 4 | 3 | 0 | 0 |
+| Notifications & push | 7 | 6 | 0 | 1 |
+| Platform & technical | 9 | 9 | 0 | 3 |
+| Security & privacy posture ¹ | 13 | 2 | 2 | 10 |
+| **Total (buildable rows)** | **297** | **259** | **14** | **21** |
 
 ¹ Excluded from the total.
 
@@ -391,7 +391,7 @@ is not a point in VidMate's favour.
 | 1 | Ad-free by construction | No ad SDKs, no tracking |
 | 2 | Material-You dynamic colour | Android 12+ |
 | 3 | 4-source merged Shorts pipeline | InnerTube / Invidious / NewPipe / PeerTube |
-| 4 | 111-test JVM suite | All green |
+| 4 | 140-test JVM suite | All green |
 | 5 | Open-source license | `LICENSE` present |
 | 6 | Invidious instance pool | User-tunable |
 | 7 | Shorts query pool | User-tunable |

@@ -1,0 +1,21 @@
+[
+  {
+    "id": "com.cobalt.module.core",
+    "name": "Core downloader",
+    "versionName": "builtin",
+    "entryPoint": "com.cobalt.android.plugin.builtin.CoreModule",
+    "required": true
+  },
+  {
+    "id": "com.cobalt.module.extractors",
+    "name": "Site extractors",
+    "versionName": "builtin",
+    "entryPoint": "com.cobalt.android.plugin.builtin.ExtractorsModule"
+  },
+  {
+    "id": "com.cobalt.module.torrent",
+    "name": "BitTorrent downloads",
+    "versionName": "builtin",
+    "entryPoint": "com.cobalt.android.plugin.builtin.TorrentModule"
+  }
+]

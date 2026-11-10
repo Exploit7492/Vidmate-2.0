@@ -44,6 +44,10 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.cobalt.android.R
 import com.cobalt.android.ui.theme.CobaltTheme
+import com.cobalt.android.ui.common.OfflineScreen
+import com.cobalt.android.ui.common.RefreshableFeed
+import com.cobalt.android.util.NetworkMonitor
+import androidx.compose.ui.platform.LocalContext
 
 /**
  * Home surface, rendered from `HomeFragment`'s `ComposeView`. VidMate-style
@@ -76,15 +80,27 @@ fun HomeScreen(viewModel: HomeViewModel, onPlaylist: () -> Unit = {}) {
                 onPlaylist = onPlaylist
             )
             SectionHeader("Recommended")
+            val context = LocalContext.current
+            val online = remember(feed, isLoadingFeed) { NetworkMonitor.isOnline(context) }
             Box(Modifier.weight(1f).fillMaxWidth()) {
-                HomeFeed(
-                    items = feed,
-                    isLoading = isLoadingFeed,
-                    isFromCache = isFromCache,
-                    isResolvingStream = isResolvingStream,
-                    onItemClick = viewModel::onFeedItemClick,
-                    onDownloadClick = viewModel::downloadFromFeed
-                )
+                when {
+                    !online && feed.isEmpty() && !isLoadingFeed ->
+                        OfflineScreen(onRetry = viewModel::refreshFeed)
+                    else ->
+                        RefreshableFeed(
+                            refreshing = isLoadingFeed,
+                            onRefresh = viewModel::refreshFeed
+                        ) {
+                            HomeFeed(
+                                items = feed,
+                                isLoading = isLoadingFeed,
+                                isFromCache = isFromCache,
+                                isResolvingStream = isResolvingStream,
+                                onItemClick = viewModel::onFeedItemClick,
+                                onDownloadClick = viewModel::downloadFromFeed
+                            )
+                        }
+                }
             }
         }
 

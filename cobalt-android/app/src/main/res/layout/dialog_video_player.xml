@@ -79,6 +79,29 @@
         android:background="?attr/selectableItemBackgroundBorderless"
         android:contentDescription="@string/action_pip" />
 
+    <ImageView
+        android:id="@+id/btnFloat"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_gravity="top|end"
+        android:layout_marginTop="192dp"
+        android:layout_marginEnd="8dp"
+        android:padding="10dp"
+        android:src="@android:drawable/ic_menu_upload"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/action_float" />
+
+    <TextView
+        android:id="@+id/tvGestureFeedback"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:background="#99000000"
+        android:padding="10dp"
+        android:textColor="@color/cobalt_text_primary"
+        android:textSize="16sp"
+        android:visibility="gone" />
+
     <TextView
         android:id="@+id/tvPlayerError"
         android:layout_width="wrap_content"

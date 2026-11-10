@@ -13,6 +13,9 @@ import com.cobalt.android.download.DownloadCanceller
 import com.cobalt.android.download.DownloadRecord
 import com.cobalt.android.download.DownloadStatus
 import com.cobalt.android.ui.downloads.DownloadsScreen
+import com.cobalt.android.util.ShareHelper
+import com.cobalt.android.util.StorageStats
+import java.io.File
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 
 /**
@@ -61,7 +64,17 @@ class DownloadQueueSheet : BottomSheetDialogFragment() {
                     VideoPlayerDialogFragment.newInstance(record.mediaStoreUriString)
                         .show(parentFragmentManager, VideoPlayerDialogFragment.TAG)
                 },
-                onClear = { viewModel.clearCompleted() }
+                onClear = { viewModel.clearCompleted() },
+                onShare = { record ->
+                    ShareHelper.shareUri(requireContext(), record.mediaStoreUriString, record.mimeType)
+                },
+                onShareBluetooth = { record ->
+                    ShareHelper.shareUri(requireContext(), record.mediaStoreUriString, record.mimeType, bluetooth = true)
+                },
+                freeSpaceText = run {
+                    val dir = requireContext().getExternalFilesDir(null) ?: File(requireContext().filesDir.path)
+                    "${StorageStats.formatBytes(StorageStats.freeBytes(dir))} free"
+                }
             )
         }
     }

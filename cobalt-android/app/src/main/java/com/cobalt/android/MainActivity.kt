@@ -122,6 +122,14 @@ class MainActivity : AppCompatActivity() {
 
     private fun handleIntent(intent: Intent?) {
         when {
+            // Open-with / deep link: cobalt://download?url=... or a VIEW of an
+            // http(s) link the user chose to open in Cobalt.
+            intent?.action == Intent.ACTION_VIEW -> {
+                val url = intent.dataString
+                    ?.let { UrlMatcher.extractUrl(it) }
+                    ?: intent.data?.getQueryParameter("url")
+                if (!url.isNullOrBlank()) submitUrl(url) else openInBrowser(intent.dataString.orEmpty())
+            }
             intent?.action == Intent.ACTION_SEND && intent.type == "text/plain" -> {
                 val text = intent.getStringExtra(Intent.EXTRA_TEXT)
                 val url = UrlMatcher.extractUrl(text)
