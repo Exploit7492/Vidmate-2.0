@@ -185,6 +185,31 @@ detail was available, and this sandbox cannot run the app to reproduce
 it; get a specific symptom (black screen? infinite spinner? crash? one
 source or all four?) before guessing at a fix.
 
+## Continuation (VidMate 2.0 rebrand + Shorts drama rail + floating tab)
+
+The project was rebranded to **VidMate 2.0** and published at
+`github.com/Exploit7492/Vidmate-2.0` (branch `shorts-drama-source`, PR #1),
+built on the VidMate reverse-engineering work.
+
+Shorts drama rail (`shorts/source/DramaShortsSource.kt`) is now an aggregator
+over public, key-free catalogues: **Dailymotion** keyword search and a second
+Dailymotion **channels** provider (complete-series compilations), **iptv-org**
+category playlists as the stable floor, and best-effort **ChartDrama** plus the
+bot-walled sites (DramaBox / DramaShorts / Shortical / FlickReels /
+shorts-drama.com). Each provider fails closed independently and only emits
+items with a usable stream URL. New test coverage keeps the suite at 147 tests,
+0 failures.
+
+App shell: the Shorts entry in the bottom bar is now a **floating rounded pill
+lifted above the bar** with a circular accent flare behind it. The bar's own
+middle slot is hidden (its space reserved) so the pill is the sole Shorts
+affordance; Home and Settings sit either side. See
+`MainActivity.setupFloatingShortsTab`, `activity_main.xml`,
+`res/drawable/bg_shorts_tab.xml`, `res/drawable/bg_shorts_flare.xml`.
+
+Debug APKs (all ABIs) are attached to the GitHub release `v2.0-debug` and also
+served over the workspace host for Termux installs.
+
 ## Continuation (part 3, same session): the real ffmpeg-kit fix + a CI
 ## workflow bug that was making runs look inconsistent
 
