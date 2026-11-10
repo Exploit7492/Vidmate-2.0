@@ -33,7 +33,7 @@ committed — they are regenerated per `VIDMATE-REVERSE-ENGINEERING.md`.
 ```bash
 cd cobalt-android
 ./gradlew :app:assembleDebug        # per-ABI + universal debug APKs
-./gradlew :app:testDebugUnitTest    # 140 JVM tests
+./gradlew :app:testDebugUnitTest    # 147 JVM tests
 ```
 
 Debug APKs land in `cobalt-android/app/build/outputs/apk/debug/`:

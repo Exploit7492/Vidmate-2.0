@@ -12,6 +12,7 @@ import com.cobalt.android.shorts.source.InnertubeShortsSource
 import com.cobalt.android.shorts.source.InvidiousShortsSource
 import com.cobalt.android.shorts.source.NewPipeShortsSource
 import com.cobalt.android.shorts.source.PeerTubeShortsSource
+import com.cobalt.android.shorts.source.DramaShortsSource
 import com.cobalt.android.shorts.source.ShortsSource
 import com.cobalt.android.util.SettingsRepository
 import kotlinx.coroutines.Dispatchers
@@ -81,7 +82,16 @@ class ShortsFeedRepository(
             // PeerTubeShortsSource's doc comment. Unlike Invidious, this
             // doesn't need a hardcoded/configurable instance list: one
             // federated search index covers ~800+ public instances at once.
-            PeerTubeShortsSource()
+            PeerTubeShortsSource(),
+            // Drama / short-series rail aggregating public, key-free
+            // catalogues — Dailymotion (real title + HLS m3u8) as the
+            // primary source, with iptv-org and the scraped drama sites as
+            // independent, individually-failable fallbacks. See
+            // DramaShortsSource's class doc for the provider list and why
+            // each one is or isn't expected to contribute. Every item that
+            // survives carries a ready-to-play stream URL, so the Shorts
+            // "save" action has nothing to resolve first.
+            DramaShortsSource()
         )
     )
 

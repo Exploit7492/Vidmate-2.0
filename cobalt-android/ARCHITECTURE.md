@@ -301,6 +301,20 @@ volume driver and the shelf only as a secondary top-up, for the same reason.
 - `shorts/source/InvidiousShortsSource.kt` — public-instance `/api/v1/search`
   + `/api/v1/popular` top-up, with per-call instance failover
 - `shorts/source/PeerTubeShortsSource.kt` — Session 6 addendum, see above
+- `shorts/source/DramaShortsSource.kt` — the "shorts drama" rail: an
+  aggregator over public, key-free catalogues, merged into one feed with each
+  provider individually failable. **Dailymotion** is the primary source — the
+  public `api.dailymotion.com` search plus the player-metadata endpoint give a
+  real title, a cover and a playable HLS `.m3u8` per item with no token.
+  **iptv-org**'s category playlists are the stable floor (title + `.m3u8`
+  already present). **DramaBox / DramaShorts / Shortical / FlickReels /
+  shorts-drama.com** are best-effort: their catalogue data sits behind a bot
+  wall or an authenticated API today, so they usually no-op, but each is one
+  independent attempt that fails closed and contributes the moment one opens
+  up. An item is only emitted when it carries a usable stream URL, so nothing
+  in the rail is a dead tile. Both the `#EXTINF` playlist parser and the
+  generic catalogue reader are covered by
+  `app/src/test/.../shorts/source/DramaShortsSourceTest.kt`.
 - `shorts/source/OkHttpNewPipeDownloader.kt`, `NewPipeInit.kt` — required
   glue so NewPipeExtractor uses the project's existing OkHttp stack instead
   of a second HTTP client

@@ -128,3 +128,27 @@ Everything below builds (`:app:assembleDebug`) and the suite passes (140 tests):
 Keep the pure-logic-and-JVM-test pattern: `LanguageDetector`, `MusicGrouping`
 (injected id lookup), `StorageStats`, `PluginRegistry`, `ContentLanguageRule`,
 `WidgetPresenter` all have real tests, no Android framework needed.
+
+## Shorts drama rail + HLS download round (latest, all green)
+Everything builds (`:app:assembleDebug`) and the suite passes.
+- `shorts/source/DramaShortsSource.kt` — the "shorts drama" feed: an
+  aggregator over public, key-free catalogues, merged round-robin with each
+  provider independently failable and time-boxed. **Dailymotion** (public
+  search + player-metadata) is primary — it yields a real title, cover and
+  playable HLS `.m3u8` with no token. **iptv-org** category playlists are the
+  floor. DramaBox/DramaShorts/Shortical/FlickReels/shorts-drama.com are
+  best-effort (their catalogue is behind a bot wall or an authed API today, so
+  they usually no-op but contribute if one opens up). An item is only emitted
+  with a usable stream URL.
+- Wired into `shorts/ShortsFeedRepository.kt` as a fourth source alongside
+  Innertube/NewPipe/Invidious/PeerTube; it reuses the existing per-source
+  backoff, so a provider storm can't stall `loadMore()`.
+- Parsers are covered by `app/src/test/.../shorts/source/DramaShortsSourceTest.kt`
+  (`#EXTINF` playlists + generic JSON catalogue shapes), pure-JVM, no network.
+- HLS save path: `download/HlsDownloadEngine.kt` (fetch full playlist),
+  `transcode/HlsRemuxWorker.kt` (WorkManager remux `.ts` → container),
+  `download/DownloadService.kt` `ACTION_HLS`/`processHls`, and the Shorts save
+  action in `ui/shorts/ShortsViewModel.kt` + `ui/shorts/ShortsFragment.kt`.
+
+Keep the same pattern for new sources: pure parse functions in an `internal`
+companion, real JSON/playlist fixtures in tests, and no mocks.

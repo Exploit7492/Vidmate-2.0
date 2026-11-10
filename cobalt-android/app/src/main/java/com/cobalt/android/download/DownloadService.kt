@@ -10,6 +10,7 @@ import android.util.Log
 import com.cobalt.android.db.HistoryRepository
 import com.cobalt.android.db.entities.HistoryEntity
 import com.cobalt.android.db.entities.HistoryItemType
+import com.cobalt.android.transcode.HlsRemuxWorker
 import com.cobalt.android.transcode.TranscodeProfile
 import com.cobalt.android.transcode.TranscodeWorker
 import com.cobalt.android.util.NotificationHelper
@@ -41,6 +42,10 @@ class DownloadService : Service() {
     // Phase B: the segmented/resumable engine. A single OkHttpClient is shared
     // so its connection pool is reused across the parallel part requests.
     private val engine by lazy { SegmentedDownloadEngine(okHttpClient) }
+
+    // HLS manifest-aware engine — see [processHls] for why it exists alongside
+    // the byte-range engine.
+    private val hlsEngine by lazy { HlsDownloadEngine(okHttpClient) }
 
     override fun onCreate() {
         super.onCreate()
@@ -94,11 +99,34 @@ class DownloadService : Service() {
                     processBlob(record.copy(id = id))
                 }
             }
+            ACTION_HLS -> {
+                val record = DownloadRecord(
+                    originalUrl = intent.getStringExtra(EXTRA_ORIGINAL_URL) ?: "",
+                    cobaltUrl = intent.getStringExtra(EXTRA_URL) ?: return START_NOT_STICKY,
+                    filename = intent.getStringExtra(EXTRA_FILENAME) ?: "download",
+                    mimeType = intent.getStringExtra(EXTRA_MIME_TYPE) ?: "application/vnd.apple.mpegurl",
+                    cookies = intent.getStringExtra(EXTRA_COOKIES) ?: "",
+                    userAgent = intent.getStringExtra(EXTRA_USER_AGENT) ?: ""
+                )
+                scope.launch {
+                    val id = repository.insert(record)
+                    processHls(record.copy(id = id))
+                }
+            }
         }
         return START_NOT_STICKY
     }
 
     private suspend fun processHttps(record: DownloadRecord, transcodeProfile: TranscodeProfile? = null) {
+        // An .m3u8 is a playlist, not media — the byte-range engine below would
+        // just fetch the manifest text. Route every HLS URL through the
+        // manifest-aware path regardless of which caller submitted it, so the
+        // paste-a-link flow, search results and Shorts all get a real MP4
+        // without each having to know the difference.
+        if (HlsDownloadEngine.isHlsUrl(record.cobaltUrl)) {
+            processHls(record)
+            return
+        }
         active.incrementAndGet()
         // Register this transfer so a cancel tap can reach it (see
         // CancellationRegistry / DownloadCanceller).
@@ -253,6 +281,65 @@ class DownloadService : Service() {
         else -> "application/octet-stream"
     }
 
+    /**
+     * HLS path: pulls the whole playlist (all segments, concatenated) with
+     * [HlsDownloadEngine] rather than the byte-range engine, because a `.m3u8`
+     * is a manifest and ranging over it would just re-fetch text. The finished
+     * `.ts` is then handed to [HlsRemuxWorker] for a stream-copy remux to MP4,
+     * since a raw transport stream isn't something the gallery indexes.
+     */
+    private suspend fun processHls(record: DownloadRecord) {
+        active.incrementAndGet()
+        val selfJob = coroutineContext[Job]
+        if (selfJob != null) CancellationRegistry.register(record.id, selfJob)
+
+        val headers = buildMap {
+            if (record.cookies.isNotBlank()) put("Cookie", record.cookies)
+            if (record.userAgent.isNotBlank()) put("User-Agent", record.userAgent)
+        }
+        val partialDir = File(filesDir, "partial").apply { mkdirs() }
+        val tempFile = File(partialDir, "hls_${record.id}.ts")
+
+        try {
+            repository.updateStatus(record.id, DownloadStatus.DOWNLOADING)
+            val result = hlsEngine.download(record.cobaltUrl, headers, tempFile) { done, total ->
+                val totalBytes = if (total > 0) total else 0L
+                repository.updateProgress(record.id, done, totalBytes)
+                notificationHelper.updateProgress(
+                    record.id, done.toInt(), totalBytes.toInt(), label = "Downloading…"
+                )
+            }
+            // The .ts itself is transient: it exists only long enough for the
+            // remux worker to read it, and the remux worker deletes it when it
+            // is done (success or failure). The row stays CONVERTING until
+            // that worker finalises it, so the queue shows one honest entry.
+            repository.updateStatus(record.id, DownloadStatus.CONVERTING)
+            notificationHelper.updateProgress(record.id, 0, 100, label = "Preparing MP4…")
+            HlsRemuxWorker.enqueue(
+                applicationContext,
+                sourceRecordId = record.id,
+                tempPath = result.file.absolutePath,
+                outputName = record.filename,
+                originalUrl = record.originalUrl
+            )
+        } catch (e: CancellationException) {
+            withContext(NonCancellable) { repository.markCancelled(record.id) }
+            notificationHelper.cancel(record.id)
+            tempFile.delete()
+            throw e
+        } catch (e: UnknownHostException) {
+            tempFile.delete()
+            handleNetworkFail(record)
+        } catch (e: Exception) {
+            Log.e(TAG, "HLS download failed", e)
+            tempFile.delete()
+            repository.updateStatus(record.id, DownloadStatus.FAILED)
+            notificationHelper.showFailed(record.id, record.filename)
+        } finally {
+            active.decrementAndGet()
+        }
+    }
+
     private suspend fun processBlob(record: DownloadRecord) {
         active.incrementAndGet()
         val tempFile = File(record.tempFilePath)
@@ -338,6 +425,7 @@ class DownloadService : Service() {
 
         const val ACTION_HTTPS = "com.cobalt.android.HTTPS"
         const val ACTION_BLOB = "com.cobalt.android.BLOB"
+        const val ACTION_HLS = "com.cobalt.android.HLS"
         const val EXTRA_URL = "url"
         const val EXTRA_ORIGINAL_URL = "originalUrl"
         const val EXTRA_FILENAME = "filename"
@@ -383,6 +471,27 @@ class DownloadService : Service() {
                 putExtra(EXTRA_ORIGINAL_URL, originalUrl)
                 putExtra(EXTRA_FILENAME, filename)
                 putExtra(EXTRA_MIME_TYPE, mimeType)
+            })
+        }
+
+        /**
+         * HLS download: every segment in the playlist, concatenated, then
+         * remuxed to MP4. Distinct from [startHttps] because that path probes
+         * for byte ranges and streams the response body — correct for a single
+         * file, useless for a `.m3u8` manifest.
+         */
+        fun startHls(
+            ctx: Context, hlsUrl: String, filename: String,
+            mimeType: String, cookies: String, userAgent: String, originalUrl: String
+        ) {
+            ctx.startForegroundService(Intent(ctx, DownloadService::class.java).apply {
+                action = ACTION_HLS
+                putExtra(EXTRA_URL, hlsUrl)
+                putExtra(EXTRA_ORIGINAL_URL, originalUrl)
+                putExtra(EXTRA_FILENAME, filename)
+                putExtra(EXTRA_MIME_TYPE, mimeType)
+                putExtra(EXTRA_COOKIES, cookies)
+                putExtra(EXTRA_USER_AGENT, userAgent)
             })
         }
     }

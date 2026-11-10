@@ -58,11 +58,40 @@ class FfmpegTranscoder(private val context: Context) {
         profile: TranscodeProfile,
         totalDurationMs: Long,
         onProgress: (Int) -> Unit
-    ): Result = suspendCancellableCoroutine { cont ->
-        val resumed = AtomicBoolean(false)
+    ): Result {
         val safInput = FFmpegKitConfig.getSafParameterForRead(context, inputUri)
         val safOutput = FFmpegKitConfig.getSafParameterForWrite(context, outputUri)
-        val args = buildArgs(safInput, safOutput, profile)
+        return execute(safInput, safOutput, profile, totalDurationMs, onProgress)
+    }
+
+    /**
+     * Same as [transcode] but reads from a plain filesystem path instead of a
+     * `content://` URI. [HlsRemuxWorker] needs this because its input is the
+     * raw MPEG-TS file the HLS engine wrote into the app's private
+     * `filesDir/partial`, which never goes through MediaStore — there is no
+     * URI to open, only a path ffmpeg can read directly.
+     */
+    suspend fun transcodeFile(
+        inputPath: String,
+        outputUri: Uri,
+        profile: TranscodeProfile,
+        totalDurationMs: Long,
+        onProgress: (Int) -> Unit
+    ): Result {
+        val safOutput = FFmpegKitConfig.getSafParameterForWrite(context, outputUri)
+        return execute(inputPath, safOutput, profile, totalDurationMs, onProgress, rawMpegTs = true)
+    }
+
+    private suspend fun execute(
+        inputArg: String,
+        safOutput: String,
+        profile: TranscodeProfile,
+        totalDurationMs: Long,
+        onProgress: (Int) -> Unit,
+        rawMpegTs: Boolean = false
+    ): Result = suspendCancellableCoroutine { cont ->
+        val resumed = AtomicBoolean(false)
+        val args = buildArgs(inputArg, safOutput, profile, rawMpegTs)
 
         Log.i(TAG, "ffmpeg ${args.joinToString(" ")}")
 
@@ -110,8 +139,20 @@ class FfmpegTranscoder(private val context: Context) {
         }
     }
 
-    private fun buildArgs(safInput: String, safOutput: String, profile: TranscodeProfile): List<String> {
-        val args = mutableListOf("-y", "-i", safInput)
+    private fun buildArgs(
+        inputArg: String,
+        safOutput: String,
+        profile: TranscodeProfile,
+        rawMpegTs: Boolean
+    ): List<String> {
+        val args = mutableListOf("-y")
+        // The HLS remux path is handed a raw MPEG-TS bitstream, not a
+        // container ffmpeg can recognise on its own, so name its input format.
+        // `-f` is an *input* option and must precede `-i`.
+        if (rawMpegTs) {
+            args += listOf("-f", "mpegts")
+        }
+        args += listOf("-i", inputArg)
         when (profile) {
             is TranscodeProfile.Video -> {
                 args += "-map"; args += "0:v:0"
