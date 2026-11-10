@@ -66,8 +66,8 @@ class MainActivity : AppCompatActivity() {
         val navController = findNavController(R.id.navHost)
         val nav = findViewById<BottomNavigationView>(R.id.navBottom)
         nav.setupWithNavController(navController)
-        setupFloatingShortsTab(navController, nav)
         applyRemoteTabs()
+        setupFloatingShortsTab(navController, nav)
         setupHeader()
         observeDownloadQueue()
         handleFirstLaunch()
@@ -93,7 +93,6 @@ class MainActivity : AppCompatActivity() {
             if (current != R.id.nav_shorts) {
                 navController.navigate(R.id.nav_shorts)
             }
-            nav.selectedItemId = R.id.nav_shorts
         }
 
         tab.setOnClickListener { openShorts() }
