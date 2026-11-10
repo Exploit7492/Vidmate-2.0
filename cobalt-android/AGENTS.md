@@ -156,3 +156,35 @@ Everything builds (`:app:assembleDebug`) and the suite passes.
 
 Keep the same pattern for new sources: pure parse functions in an `internal`
 companion, real JSON/playlist fixtures in tests, and no mocks.
+
+## Startup smoke tests (Robolectric) — keep these green
+`app/src/test/.../StartupSmokeTest.kt` launches the *real* `MainActivity` and
+`SplashActivity` on the JVM (`org.robolectric:robolectric:4.12.2`, plus
+`androidx.test:core`). This is what caught the launch crash that a normal
+compile can't see.
+- `MainActivity.onCreate` must read the `NavController` off the
+  `NavHostFragment` **after** `supportFragmentManager.executePendingTransactions()`.
+  `findNavController(R.id.navHost)` alone throws
+  `IllegalStateException: … does not have a NavController set` because
+  `FragmentContainerView` adds the host in a *pending* transaction. The
+  controller is cached in a `navController` field and reused.
+- `Theme.Cobalt` parent **must stay** `Theme.Material3.DayNight.NoActionBar`.
+  Any parent that has an ActionBar re-introduces the static "VidMate 2.0" title
+  strip. With no ActionBar, the Compose `HeaderBar` owns the status-bar inset
+  (`WindowInsets.statusBars`); keep that padding if you move the header.
+- Test deps for this live in `app/build.gradle.kts` and
+  `testOptions { unitTests { isIncludeAndroidResources = true } }` — Robolectric
+  needs the resources flag or activity inflation fails.
+
+## App icon + splash logo come from the uploaded art
+The launcher icon and splash logo are generated from the user-uploaded
+`incoming/vid.png` (black line art), not hand-authored vectors.
+- Adaptive icon (`res/mipmap-anydpi-v26/ic_launcher.xml`) foreground is
+  `@mipmap/ic_launcher_foreground` (PNG per density, transparent), background is
+  `@color/ic_launcher_background` (white / near-black in `values-night`). Do not
+  re-add a `@drawable/ic_launcher_foreground` vector — that was the leftover
+  white chevron the user rejected.
+- Splash logo `res/drawable-nodpi/vidmate_logo.png` has a **transparent**
+  background; `res/drawable-night-nodpi/vidmate_logo.png` is the same art with
+  inverted ink so it reads on the dark background. The Compose splash
+  (`SplashActivity` + `ui/common/TypewriterText.kt`) types the name out.
