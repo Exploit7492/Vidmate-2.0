@@ -538,34 +538,34 @@ describes a behaviour Cobalt intentionally lacks.
 
 | Part | VidMate ✅ | Cobalt ✅ | Cobalt ⚠️ | Cobalt ❌ |
 |---|:--:|:--:|:--:|:--:|
-| A1 Entry & first-run | 13 | 7 | 2 | 3 |
-| A2 Navigation shell | 11 | 9 | 1 | 0 |
-| A3 Screen inventory | 30 | 22 | 1 | 1 |
-| A4 Home & discovery UX | 7 | 6 | 0 | 0 |
-| A5 Download UX | 18 | 17 | 0 | 0 |
-| A6 Player UX | 12 | 8 | 2 | 1 |
-| A7 Library UX | 10 | 8 | 1 | 1 |
-| A8 Browser UX | 9 | 7 | 0 | 2 |
-| A9 Vault UX | 6 | 5 | 1 | 0 |
-| A10 Music UX | 10 | 6 | 0 | 4 |
-| A11 Settings UX | 14 | 16 | 0 | 1 |
-| A12 Theming | 8 | 7 | 1 | 1 |
-| A13 Localisation | 7 | 3 | 2 | 2 |
-| A14 Onboarding | 8 | 6 | 0 | 0 |
-| A15 Notifications & widgets | 9 | 8 | 1 | 0 |
-| A16 Sharing | 5 | 3 | 0 | 2 |
-| A17 Growth UX ¹ | 7 | 1 | 1 | 0 |
-| B1 Download engine | 24 | 19 | 2 | 3 |
-| B2 Site support | 22 | 24 | 0 | 3 |
-| B3 Playback | 15 | 12 | 2 | 1 |
-| B4 Library / vault | 12 | 10 | 0 | 2 |
-| B5 Browser | 8 | 6 | 0 | 2 |
-| B6 Discovery | 10 | 8 | 1 | 0 |
-| B7 Music | 9 | 5 | 0 | 4 |
-| B8 Social | 4 | 2 | 0 | 1 |
-| B9 Notifications | 7 | 5 | 0 | 1 |
-| B10 Platform | 9 | 7 | 0 | 5 |
-| B11 Security posture ¹ | 13 | 2 | 1 | 11 |
+| Entry points, launch & first-run | 13 | 7 | 2 | 3 |
+| Navigation shell | 11 | 9 | 1 | 0 |
+| Screen inventory (count of distinct user-facing screens) | 30 | 22 | 1 | 1 |
+| Home & discovery UX | 7 | 6 | 0 | 0 |
+| Download UX | 18 | 17 | 0 | 0 |
+| Player UX | 12 | 8 | 2 | 1 |
+| Library & local-media UX | 10 | 8 | 1 | 1 |
+| In-app browser UX | 9 | 7 | 0 | 2 |
+| Vault UX | 6 | 5 | 1 | 0 |
+| Music UX | 10 | 6 | 0 | 4 |
+| Settings UX | 14 | 16 | 0 | 1 |
+| Theming & visual design | 8 | 7 | 1 | 1 |
+| Localisation | 7 | 3 | 2 | 2 |
+| Onboarding, permissions & guidance | 8 | 6 | 0 | 0 |
+| Notifications & widgets UX | 9 | 8 | 1 | 0 |
+| Sharing UX | 5 | 3 | 0 | 2 |
+| Growth & monetisation UX ¹ | 7 | 1 | 1 | 0 |
+| Download engine | 24 | 19 | 2 | 3 |
+| Site support & extraction | 22 | 24 | 0 | 3 |
+| Media playback | 15 | 12 | 2 | 1 |
+| Library, local media & vault | 12 | 10 | 0 | 2 |
+| In-app browser | 8 | 6 | 0 | 2 |
+| Discovery & engagement | 10 | 8 | 1 | 0 |
+| Music | 9 | 5 | 0 | 4 |
+| Social & sharing | 4 | 2 | 0 | 1 |
+| Notifications & push | 7 | 5 | 0 | 1 |
+| Platform & technical | 9 | 7 | 0 | 5 |
+| Security & privacy posture ¹ | 14 | 2 | 1 | 11 |
 | **Total (buildable rows)** | **297** | **236** | **17** | **40** |
 
 ¹ Excluded from the total: A17 is the monetisation layer (a deliberate
