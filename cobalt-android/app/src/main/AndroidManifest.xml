@@ -50,6 +50,34 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="text/plain" />
             </intent-filter>
+            <!-- Share target: appear in the system share sheet for any text a
+                 user might share (a link from a browser, a caption, a URL in a
+                 note app). text/* rather than just text/plain so we show up for
+                 text/html shares too; the URL is extracted from whatever text
+                 arrives. -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/*" />
+            </intent-filter>
+            <!-- Share target for media: show up when the user shares a video or
+                 image so they can hand it straight to the downloader. -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="video/*" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="image/*" />
+            </intent-filter>
+            <!-- Multiple items shared at once (e.g. several links). -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND_MULTIPLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/*" />
+            </intent-filter>
             <!-- Open-with: a media URL shared as VIEW lands in the resolver. -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />

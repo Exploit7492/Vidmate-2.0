@@ -11,3 +11,5 @@ cobalt-android/local.properties
 cobalt-android/build/
 cobalt-android/app/build/
 cobalt-android/app-debug.apk
+incoming/
+serve/

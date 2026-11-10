@@ -1,23 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!--
-      LIGHT palette (default). values-night/colors.xml carries the dark
-      palette; Theme.Cobalt is a DayNight theme, so AppCompatDelegate's night
-      mode (driven by SettingsRepository.ThemeMode via ThemeApplier) selects
-      between the two. Brand blue/red are shared across both modes.
+      LIGHT palette — "ancient blue crescent" over frosted glass. values-night
+      carries the polished-dark + gold + ruby palette. Theme.Cobalt is a
+      DayNight theme, so the night flag (SettingsRepository.ThemeMode via
+      ThemeApplier) selects between them. cobalt_accent_blue is the single
+      brand-accent token: blue here, gold in dark.
     -->
-    <color name="cobalt_background">#FFFFFF</color>
-    <color name="cobalt_surface">#F6F7F9</color>
-    <color name="cobalt_surface_sidebar">#FFFFFF</color>
-    <color name="cobalt_surface_elevated">#ECEEF1</color>
-    <color name="cobalt_surface_card">#F1F3F6</color>
-    <color name="cobalt_divider">#E2E5EA</color>
-    <color name="cobalt_text_primary">#111418</color>
-    <color name="cobalt_text_secondary">#5A6169</color>
-    <color name="cobalt_text_tertiary">#8A9199</color>
-    <color name="cobalt_accent_blue">#F5402E</color>
-    <color name="cobalt_success_green">#2E9E3A</color>
-    <color name="cobalt_error_red">#E0342F</color>
-    <color name="cobalt_gold">#E0A800</color>
-    <color name="cobalt_input_border">#CED3DA</color>
+    <color name="cobalt_background">#EEF3FA</color>
+    <color name="cobalt_surface">#E7EFF9</color>
+    <color name="cobalt_surface_sidebar">#F7FAFE</color>
+    <color name="cobalt_surface_elevated">#FFFFFF</color>
+    <color name="cobalt_surface_card">#E9F1FB</color>
+    <color name="cobalt_divider">#D2DEEF</color>
+    <color name="cobalt_text_primary">#0F2438</color>
+    <color name="cobalt_text_secondary">#47617C</color>
+    <color name="cobalt_text_tertiary">#7C93AB</color>
+    <color name="cobalt_accent_blue">#1E4B7A</color>
+    <color name="cobalt_crescent">#E3C56B</color>
+    <color name="cobalt_success_green">#2E7D53</color>
+    <color name="cobalt_error_red">#B3242E</color>
+    <color name="cobalt_gold">#C9A227</color>
+    <color name="cobalt_ruby">#B3242E</color>
+    <color name="cobalt_input_border">#C2D2E4</color>
+
+    <!-- Glassmorphism tokens: translucent fill + hairline border + soft sheen. -->
+    <color name="cobalt_glass_fill">#8CF2F7FE</color>
+    <color name="cobalt_glass_fill_strong">#D9FFFFFF</color>
+    <color name="cobalt_glass_border">#66FFFFFF</color>
+    <color name="cobalt_glass_sheen">#33FFFFFF</color>
+
+    <!-- The circular flare above the floating Shorts tab: a soft blue bloom in
+         light mode, mirroring the accent, fading to fully transparent. -->
+    <color name="cobalt_flare_core">#FFEAF2FB</color>
+    <color name="cobalt_flare_mid">#80A9C7E8</color>
+    <color name="cobalt_flare_edge">#001E4B7A</color>
+    <color name="cobalt_flare_ring">#401E4B7A</color>
+
+    <!-- Content drawn on top of the accent pill (e.g. the Shorts icon). -->
+    <color name="cobalt_on_accent">#FFFFFFFF</color>
 </resources>

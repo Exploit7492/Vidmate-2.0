@@ -48,7 +48,15 @@ fun SettingsScreen(
     onBatteryClick: () -> Unit = {},
     onPluginsClick: () -> Unit = {},
     onWidgetSettingsClick: () -> Unit = {},
-    onRecreate: () -> Unit = {}
+    onRecreate: () -> Unit = {},
+    onVaultClick: () -> Unit = {},
+    onMediaLibraryClick: () -> Unit = {},
+    onMusicClick: () -> Unit = {},
+    onStatusClick: () -> Unit = {},
+    onGamesClick: () -> Unit = {},
+    onBrowserClick: () -> Unit = {},
+    onCheckUpdatesClick: () -> Unit = {},
+    onAboutClick: () -> Unit = {}
 ) {
     val state by viewModel.state.collectAsState()
 
@@ -91,7 +99,7 @@ fun SettingsScreen(
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 ThemeChip("light", state.themeMode == ThemeMode.LIGHT) { viewModel.setThemeMode(ThemeMode.LIGHT) }
                 ThemeChip("dark", state.themeMode == ThemeMode.DARK) { viewModel.setThemeMode(ThemeMode.DARK) }
-                ThemeChip("dynamic", state.themeMode == ThemeMode.DYNAMIC) { viewModel.setThemeMode(ThemeMode.DYNAMIC) }
+                ThemeChip("system", state.themeMode == ThemeMode.SYSTEM) { viewModel.setThemeMode(ThemeMode.SYSTEM) }
             }
 
             Spacer(Modifier.height(24.dp))
@@ -192,10 +200,23 @@ fun SettingsScreen(
             ActionRow("manage modules", onPluginsClick)
 
             Spacer(Modifier.height(24.dp))
+            // Folded in from the removed Me tab: the app-wide "places to go"
+            // rows that aren't theme/format preferences but still need a home.
+            SectionLabel("library & tools")
+            ActionRow("vault", onVaultClick)
+            ActionRow("media library", onMediaLibraryClick)
+            ActionRow("music", onMusicClick)
+            ActionRow("status saver", onStatusClick)
+            ActionRow("browser", onBrowserClick)
+            ActionRow("games", onGamesClick)
+
+            Spacer(Modifier.height(24.dp))
             SectionLabel("actions")
             ActionRow("history & likes", onHistoryClick)
             ActionRow("clear download history", viewModel::clearDownloadHistory)
+            ActionRow("check for updates", onCheckUpdatesClick)
             ActionRow("battery optimization settings", onBatteryClick)
+            ActionRow("about", onAboutClick)
 
             Spacer(Modifier.height(32.dp))
         }

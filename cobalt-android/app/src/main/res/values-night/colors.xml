@@ -1,22 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!--
-      DARK palette — the VidMate-derived design language recovered from the
-      decompiled 6.0204 build (near-black surfaces, brand blue #0099FF accent,
-      red #EA3F40 secondary). Selected when night mode is active.
+      DARK palette — polished near-black surfaces, gold accent, ruby action
+      buttons. Not pure black: a touch of warmth keeps the gold from looking
+      harsh, and surfaces step up in small increments instead of flat #000.
     -->
-    <color name="cobalt_background">#000000</color>
-    <color name="cobalt_surface">#121212</color>
-    <color name="cobalt_surface_sidebar">#0A0A0A</color>
-    <color name="cobalt_surface_elevated">#1E1E1E</color>
-    <color name="cobalt_surface_card">#1A1A1A</color>
-    <color name="cobalt_divider">#2A2A2A</color>
-    <color name="cobalt_text_primary">#FFFFFF</color>
-    <color name="cobalt_text_secondary">#A8A8A8</color>
-    <color name="cobalt_text_tertiary">#6E6E6E</color>
-    <color name="cobalt_accent_blue">#F5402E</color>
-    <color name="cobalt_success_green">#37AA42</color>
-    <color name="cobalt_error_red">#EA3F40</color>
-    <color name="cobalt_gold">#FFC400</color>
-    <color name="cobalt_input_border">#2E2E2E</color>
+    <color name="cobalt_background">#0B0B0F</color>
+    <color name="cobalt_surface">#141519</color>
+    <color name="cobalt_surface_sidebar">#101114</color>
+    <color name="cobalt_surface_elevated">#1B1C22</color>
+    <color name="cobalt_surface_card">#17181E</color>
+    <color name="cobalt_divider">#2A2C34</color>
+    <color name="cobalt_text_primary">#F6F1E4</color>
+    <color name="cobalt_text_secondary">#B9B4A6</color>
+    <color name="cobalt_text_tertiary">#837E72</color>
+    <color name="cobalt_accent_blue">#D4AF37</color>
+    <color name="cobalt_crescent">#E8CD74</color>
+    <color name="cobalt_success_green">#3FA86A</color>
+    <color name="cobalt_error_red">#B21E35</color>
+    <color name="cobalt_gold">#D4AF37</color>
+    <color name="cobalt_ruby">#B21E35</color>
+    <color name="cobalt_input_border">#33353E</color>
+
+    <color name="cobalt_glass_fill">#B3141519</color>
+    <color name="cobalt_glass_fill_strong">#E61B1C22</color>
+    <color name="cobalt_glass_border">#40D4AF37</color>
+    <color name="cobalt_glass_sheen">#1AD4AF37</color>
+
+    <!-- Gold bloom above the floating Shorts tab, matching the dark accent. -->
+    <color name="cobalt_flare_core">#FFF7ECC9</color>
+    <color name="cobalt_flare_mid">#80D4AF37</color>
+    <color name="cobalt_flare_edge">#00D4AF37</color>
+    <color name="cobalt_flare_ring">#59D4AF37</color>
 </resources>

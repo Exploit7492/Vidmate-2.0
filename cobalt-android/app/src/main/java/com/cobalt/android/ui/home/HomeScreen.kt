@@ -2,14 +2,17 @@ package com.cobalt.android.ui.home
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,9 +20,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -36,14 +41,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import coil.compose.AsyncImage
 import com.cobalt.android.R
 import com.cobalt.android.ui.theme.CobaltTheme
+import com.cobalt.android.ui.common.DownloadBellIcon
+import com.cobalt.android.ui.common.MiniPlayerBar
 import com.cobalt.android.ui.common.OfflineScreen
 import com.cobalt.android.ui.common.RefreshableFeed
 import com.cobalt.android.util.NetworkMonitor
@@ -57,7 +68,11 @@ import androidx.compose.ui.platform.LocalContext
  * grid ([HomeFeed]) and the inline player overlay ([HomePlayer]).
  */
 @Composable
-fun HomeScreen(viewModel: HomeViewModel, onPlaylist: () -> Unit = {}) {
+fun HomeScreen(
+    viewModel: HomeViewModel,
+    onPlaylist: () -> Unit = {},
+    onOpenDownloads: () -> Unit = {}
+) {
     CobaltTheme {
         val feed by viewModel.feed.observeAsState(emptyList())
         val isLoadingFeed by viewModel.isLoadingFeed.observeAsState(false)
@@ -65,41 +80,84 @@ fun HomeScreen(viewModel: HomeViewModel, onPlaylist: () -> Unit = {}) {
         val isResolvingStream by viewModel.isResolvingStream.observeAsState(false)
         val nowPlaying by viewModel.nowPlaying.observeAsState()
 
-        val linkInput by viewModel.linkInput.observeAsState("")
         val status by viewModel.statusMessage.observeAsState()
         val isResolving by viewModel.isResolving.observeAsState(false)
 
+        val searchQuery by viewModel.searchQuery.observeAsState()
+        val searchResults by viewModel.searchResults
+            .observeAsState(com.cobalt.android.feed.model.SearchResults.EMPTY)
+        val isSearching by viewModel.isSearching.observeAsState(false)
+
+        // One ExoPlayer for the current item, shown either as a bar pinned to
+        // the top (the user keeps browsing) or full screen (the user expanded
+        // it). Only one of the two surfaces is composed at a time, which is
+        // what makes sharing the single player instance safe.
+        val player = rememberFeedPlayer(nowPlaying)
+        var expanded by remember(nowPlaying?.videoId) { mutableStateOf(false) }
+        val isPlaying = rememberIsPlaying(player)
+
         Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-            SearchBar(value = linkInput, onValueChange = viewModel::onLinkInputChanged, onSubmit = viewModel::onSubmit)
-            QuickDownloadCard(
-                value = linkInput,
-                status = status,
-                isResolving = isResolving,
-                onValueChange = viewModel::onLinkInputChanged,
-                onSubmit = viewModel::onSubmit,
-                onPlaylist = onPlaylist
-            )
-            SectionHeader("Recommended")
-            val context = LocalContext.current
-            val online = remember(feed, isLoadingFeed) { NetworkMonitor.isOnline(context) }
-            Box(Modifier.weight(1f).fillMaxWidth()) {
-                when {
-                    !online && feed.isEmpty() && !isLoadingFeed ->
-                        OfflineScreen(onRetry = viewModel::refreshFeed)
-                    else ->
-                        RefreshableFeed(
-                            refreshing = isLoadingFeed,
-                            onRefresh = viewModel::refreshFeed
-                        ) {
-                            HomeFeed(
-                                items = feed,
-                                isLoading = isLoadingFeed,
-                                isFromCache = isFromCache,
-                                isResolvingStream = isResolvingStream,
-                                onItemClick = viewModel::onFeedItemClick,
-                                onDownloadClick = viewModel::downloadFromFeed
-                            )
-                        }
+            // The mini player sits at the very top of the content, above the
+            // search results / feed, so playback stays visible while the user
+            // scrolls — the same slot Flow puts it in.
+            if (nowPlaying != null && player != null && !expanded) {
+                val item = nowPlaying!!
+                MiniPlayerBar(
+                    player = player,
+                    title = item.title,
+                    subtitle = item.channelName,
+                    isPlaying = isPlaying,
+                    onTogglePlay = { if (isPlaying) player.pause() else player.play() },
+                    onExpand = { expanded = true },
+                    onClose = viewModel::stopPlayback,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+
+            if (searchQuery != null) {
+                // The global header (MainActivity) is the only search field, so
+                // this surface shows the header's results when there are any and
+                // falls back to the recommendation feed otherwise.
+                SearchResultsSection(
+                    query = searchQuery.orEmpty(),
+                    results = searchResults,
+                    isSearching = isSearching,
+                    isResolvingStream = isResolvingStream,
+                    onBack = viewModel::clearSearch,
+                    onItemClick = viewModel::onFeedItemClick,
+                    onDownloadClick = viewModel::downloadFromFeed,
+                    onChannelClick = { viewModel.openChannel(it.browseUrl) },
+                    onPlaylistClick = { viewModel.openPlaylist(it.playlistUrl) }
+                )
+            } else {
+                DownloadsEntryCard(
+                    status = status,
+                    isResolving = isResolving,
+                    onOpenDownloads = onOpenDownloads,
+                    onPlaylist = onPlaylist
+                )
+                SectionHeader("Recommended")
+                val context = LocalContext.current
+                val online = remember(feed, isLoadingFeed) { NetworkMonitor.isOnline(context) }
+                Box(Modifier.weight(1f).fillMaxWidth()) {
+                    when {
+                        !online && feed.isEmpty() && !isLoadingFeed ->
+                            OfflineScreen(onRetry = viewModel::refreshFeed)
+                        else ->
+                            RefreshableFeed(
+                                refreshing = isLoadingFeed,
+                                onRefresh = viewModel::refreshFeed
+                            ) {
+                                HomeFeed(
+                                    items = feed,
+                                    isLoading = isLoadingFeed,
+                                    isFromCache = isFromCache,
+                                    isResolvingStream = isResolvingStream,
+                                    onItemClick = viewModel::onFeedItemClick,
+                                    onDownloadClick = viewModel::downloadFromFeed
+                                )
+                            }
+                    }
                 }
             }
         }
@@ -108,23 +166,24 @@ fun HomeScreen(viewModel: HomeViewModel, onPlaylist: () -> Unit = {}) {
         val isLoadingComments by viewModel.isLoadingComments.observeAsState(false)
         val commentsError by viewModel.commentsError.observeAsState()
 
-        nowPlaying?.let { item ->
+        if (nowPlaying != null && player != null && expanded) {
+            val item = nowPlaying!!
             var showComments by remember { mutableStateOf(false) }
             LaunchedEffect(showComments, item.videoId) {
                 if (showComments) viewModel.loadComments(item.videoId)
             }
             Dialog(
-                onDismissRequest = viewModel::stopPlayback,
+                onDismissRequest = { expanded = false },
                 properties = DialogProperties(usePlatformDefaultWidth = false)
             ) {
                 Surface(color = Color.Black, modifier = Modifier.fillMaxSize()) {
                     Box(Modifier.fillMaxSize()) {
-                        HomePlayer(item = item, modifier = Modifier.fillMaxSize())
+                        PlayerSurface(player = player, modifier = Modifier.fillMaxSize())
                         TextButton(
-                            onClick = viewModel::stopPlayback,
+                            onClick = { expanded = false },
                             modifier = Modifier.align(Alignment.TopEnd).padding(8.dp)
                         ) {
-                            Text("close", color = Color.White, fontSize = 14.sp)
+                            Text("minimise", color = Color.White, fontSize = 14.sp)
                         }
                         TextButton(
                             onClick = { showComments = !showComments },
@@ -222,65 +281,238 @@ private fun CommentsPanel(
 }
 
 @Composable
-private fun SearchBar(value: String, onValueChange: (String) -> Unit, onSubmit: () -> Unit) {
+private fun ColumnScope.SearchResultsSection(
+    query: String,
+    results: com.cobalt.android.feed.model.SearchResults,
+    isSearching: Boolean,
+    isResolvingStream: Boolean,
+    onBack: () -> Unit,
+    onItemClick: (com.cobalt.android.feed.model.FeedItem) -> Unit,
+    onDownloadClick: (com.cobalt.android.feed.model.FeedItem) -> Unit,
+    onChannelClick: (com.cobalt.android.feed.model.SearchChannel) -> Unit,
+    onPlaylistClick: (com.cobalt.android.feed.model.SearchPlaylist) -> Unit
+) {
     Row(
-        Modifier
-            .fillMaxWidth()
-            .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 8.dp)
-            .height(46.dp)
-            .clip(RoundedCornerShape(23.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant),
+        Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Spacer(Modifier.width(14.dp))
-        Icon(
-            painter = painterResource(R.drawable.ic_search),
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(20.dp)
-        )
-        Spacer(Modifier.width(10.dp))
-        androidx.compose.foundation.text.BasicTextField(
-            value = value,
-            onValueChange = onValueChange,
-            singleLine = true,
-            textStyle = androidx.compose.ui.text.TextStyle(
-                color = MaterialTheme.colorScheme.onSurface,
-                fontSize = 14.sp
-            ),
-            modifier = Modifier.weight(1f),
-            decorationBox = { inner ->
-                Box {
-                    if (value.isEmpty()) {
-                        Text(
-                            "Search or paste a link",
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontSize = 14.sp
-                        )
-                    }
-                    inner()
-                }
-            }
+        Text(
+            "\u2039",
+            color = MaterialTheme.colorScheme.primary,
+            fontSize = 24.sp,
+            modifier = Modifier.clickable(onClick = onBack).padding(end = 12.dp)
         )
         Text(
-            "Paste",
-            color = MaterialTheme.colorScheme.primary,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Medium,
-            modifier = Modifier
-                .clickable(onClick = onSubmit)
-                .padding(horizontal = 14.dp)
+            "Results for \u201C$query\u201D",
+            color = MaterialTheme.colorScheme.onSurface,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
         )
+    }
+    Box(Modifier.weight(1f).fillMaxWidth()) {
+        when {
+            isSearching && results.isEmpty -> {
+                CircularProgressIndicator(
+                    color = MaterialTheme.colorScheme.primary,
+                    strokeWidth = 2.dp,
+                    modifier = Modifier.align(Alignment.Center).size(30.dp)
+                )
+            }
+            results.isEmpty -> {
+                Text(
+                    "No results for \u201C$query\u201D",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 14.sp,
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
+            else -> LazyColumn(Modifier.fillMaxSize()) {
+                if (results.channels.isNotEmpty()) {
+                    item { SectionHeader("Channels") }
+                    item {
+                        LazyRow(
+                            contentPadding = PaddingValues(horizontal = 16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            items(results.channels, key = { it.channelId }) { ch ->
+                                SearchChannelChip(ch) { onChannelClick(ch) }
+                            }
+                        }
+                    }
+                }
+                if (results.playlists.isNotEmpty()) {
+                    item { SectionHeader("Playlists") }
+                    item {
+                        LazyRow(
+                            contentPadding = PaddingValues(horizontal = 16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            items(results.playlists, key = { it.playlistId }) { pl ->
+                                SearchPlaylistCard(pl) { onPlaylistClick(pl) }
+                            }
+                        }
+                    }
+                }
+                if (results.videos.isNotEmpty()) {
+                    item { SectionHeader("Videos") }
+                    items(results.videos, key = { it.videoId }) { item ->
+                        SearchVideoRow(
+                            item = item,
+                            isResolving = isResolvingStream,
+                            onClick = { onItemClick(item) },
+                            onDownload = { onDownloadClick(item) }
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 
 @Composable
-private fun QuickDownloadCard(
-    value: String,
+private fun SearchChannelChip(
+    channel: com.cobalt.android.feed.model.SearchChannel,
+    onClick: () -> Unit
+) {
+    Column(
+        Modifier
+            .width(110.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .clickable(onClick = onClick)
+            .padding(8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        AsyncImage(
+            model = channel.avatarUrl,
+            contentDescription = channel.name,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .size(64.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+        )
+        Spacer(Modifier.height(6.dp))
+        Text(
+            channel.name,
+            color = MaterialTheme.colorScheme.onSurface,
+            fontSize = 12.sp,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center
+        )
+        if (channel.subscriberText.isNotBlank()) {
+            Text(
+                channel.subscriberText,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontSize = 10.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
+
+@Composable
+private fun SearchPlaylistCard(
+    playlist: com.cobalt.android.feed.model.SearchPlaylist,
+    onClick: () -> Unit
+) {
+    Column(
+        Modifier
+            .width(160.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .clickable(onClick = onClick)
+    ) {
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .aspectRatio(16f / 9f)
+                .clip(RoundedCornerShape(8.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+        ) {
+            AsyncImage(
+                model = playlist.thumbnailUrl,
+                contentDescription = playlist.title,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+        Spacer(Modifier.height(6.dp))
+        Text(
+            playlist.title,
+            color = MaterialTheme.colorScheme.onSurface,
+            fontSize = 12.sp,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
+        )
+        if (playlist.videoCountText.isNotBlank()) {
+            Text(
+                playlist.videoCountText,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontSize = 10.sp
+            )
+        }
+    }
+}
+
+@Composable
+private fun SearchVideoRow(
+    item: com.cobalt.android.feed.model.FeedItem,
+    isResolving: Boolean,
+    onClick: () -> Unit,
+    onDownload: () -> Unit
+) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            Modifier
+                .width(140.dp)
+                .aspectRatio(16f / 9f)
+                .clip(RoundedCornerShape(8.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+        ) {
+            AsyncImage(
+                model = item.thumbnailUrl,
+                contentDescription = item.title,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f)) {
+            Text(
+                item.title,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontSize = 13.sp,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+            Text(
+                listOf(item.channelName, item.viewCountText)
+                    .filter { it.isNotBlank() }
+                    .joinToString(" \u2022 "),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontSize = 11.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+        DownloadBellIcon(isResolving = isResolving, onClick = onDownload)
+    }
+}
+
+@Composable
+private fun DownloadsEntryCard(
     status: String?,
     isResolving: Boolean,
-    onValueChange: (String) -> Unit,
-    onSubmit: () -> Unit,
+    onOpenDownloads: () -> Unit,
     onPlaylist: () -> Unit
 ) {
     Column(
@@ -292,15 +524,22 @@ private fun QuickDownloadCard(
             .padding(12.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                painter = painterResource(R.drawable.ic_bell),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(22.dp)
+            )
+            Spacer(Modifier.width(10.dp))
             Column(Modifier.weight(1f)) {
                 Text(
-                    "Quick download",
+                    "Downloads & library",
                     color = MaterialTheme.colorScheme.onSurface,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    "Paste a link from YouTube, TikTok, Instagram…",
+                    "Queue, alerts and saved files",
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 11.sp
                 )
@@ -312,27 +551,9 @@ private fun QuickDownloadCard(
                     modifier = Modifier.size(20.dp)
                 )
             } else {
+                TextButton(onClick = onOpenDownloads) { Text("Open", fontSize = 12.sp) }
                 TextButton(onClick = onPlaylist) { Text("Playlist", fontSize = 12.sp) }
             }
-        }
-        Spacer(Modifier.height(10.dp))
-        OutlinedTextField(
-            value = value,
-            onValueChange = onValueChange,
-            enabled = !isResolving,
-            singleLine = true,
-            placeholder = { Text("https://…", fontSize = 13.sp) },
-            shape = RoundedCornerShape(10.dp),
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(Modifier.height(10.dp))
-        androidx.compose.material3.Button(
-            onClick = onSubmit,
-            enabled = !isResolving && value.isNotBlank(),
-            shape = RoundedCornerShape(10.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(if (isResolving) "Resolving…" else "Download")
         }
         if (!status.isNullOrBlank()) {
             Text(

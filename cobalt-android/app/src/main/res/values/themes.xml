@@ -2,12 +2,21 @@
 <resources>
     <style name="Theme.Cobalt" parent="Theme.Material3.DayNight">
         <item name="colorPrimary">@color/cobalt_accent_blue</item>
-        <item name="colorOnPrimary">@color/cobalt_text_primary</item>
+        <item name="colorOnPrimary">@color/cobalt_surface_elevated</item>
+        <item name="colorSecondary">@color/cobalt_ruby</item>
+        <item name="colorOnSecondary">@color/cobalt_surface_elevated</item>
+        <item name="colorTertiary">@color/cobalt_gold</item>
         <item name="colorSurface">@color/cobalt_surface</item>
         <item name="colorOnSurface">@color/cobalt_text_primary</item>
+        <item name="colorSurfaceVariant">@color/cobalt_surface_elevated</item>
+        <item name="colorOnSurfaceVariant">@color/cobalt_text_secondary</item>
+        <item name="colorError">@color/cobalt_error_red</item>
         <item name="android:colorBackground">@color/cobalt_background</item>
-        <item name="android:statusBarColor">@android:color/transparent</item>
-        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowBackground">@color/cobalt_background</item>
+        <item name="android:statusBarColor">@color/cobalt_background</item>
+        <item name="android:navigationBarColor">@color/cobalt_background</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
         <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
         <item name="bottomSheetDialogTheme">@style/Theme.Cobalt.BottomSheet</item>
     </style>

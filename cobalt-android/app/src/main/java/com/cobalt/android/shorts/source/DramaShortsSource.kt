@@ -83,6 +83,14 @@ class DramaShortsSource : ShortsSource {
         suspend fun fetch(count: Int): List<ShortItem>
     }
 
+    /** One Dailymotion search/listing hit, before its HLS manifest is resolved. */
+    private data class DmHit(
+        val id: String,
+        val title: String,
+        val thumbnail: String,
+        val duration: Long
+    )
+
     /**
      * Dailymotion: search the public video API for drama compilations, then ask
      * the player-metadata endpoint for each result's HLS manifest. Search alone
@@ -131,16 +139,14 @@ class DramaShortsSource : ShortsSource {
             }.take(count)
         }
 
-        private data class Hit(val id: String, val title: String, val thumbnail: String, val duration: Long)
-
-        private fun search(query: String, limit: Int): List<Hit> {
+        private fun search(query: String, limit: Int): List<DmHit> {
             val url = "$API?search=${query.replace(" ", "+")}" +
                 "&fields=id,title,thumbnail_720_url,duration&sort=recent&limit=$limit"
             val list = JSONObject(get(url)).optJSONArray("list") ?: return emptyList()
             return (0 until list.length()).mapNotNull { i ->
                 val v = list.optJSONObject(i) ?: return@mapNotNull null
                 val id = v.optString("id").takeIf { it.isNotBlank() } ?: return@mapNotNull null
-                Hit(
+                DmHit(
                     id = id,
                     title = v.optString("title").ifBlank { "Short drama" },
                     thumbnail = v.optString("thumbnail_720_url"),
@@ -150,7 +156,7 @@ class DramaShortsSource : ShortsSource {
         }
 
         /** The HLS master URL from the player metadata, or null if not ready. */
-        private fun resolveHls(id: String): String? {
+        fun resolveHls(id: String): String? {
             val json = get(
                 "https://www.dailymotion.com/player/metadata/video/$id",
                 referer = "https://www.dailymotion.com/embed/video/$id"
@@ -264,6 +270,90 @@ class DramaShortsSource : ShortsSource {
     }
 
     /**
+     * ChartDrama — the community indexer named in the request. Cloudflare
+     * fronts the site today (a bare request 403s), so this is best-effort like
+     * the other scraped providers: it reads whatever JSON a non-walled mirror
+     * or a future open endpoint returns and no-ops otherwise.
+     */
+    private object ChartDramaProvider : DramaProvider {
+        override val name = "chartdrama"
+        private val urls = listOf(
+            "https://chartdrama.com/api/series",
+            "https://chartdrama.com/api/browse",
+            "https://api.chartdrama.com/v1/series"
+        )
+
+        override suspend fun fetch(count: Int): List<ShortItem> {
+            for (url in urls) {
+                val body = runCatching { getJson(url) }.getOrNull() ?: continue
+                val items = parseGenericCatalogue(body, "ChartDrama")
+                if (items.isNotEmpty()) return items.take(count)
+            }
+            return emptyList()
+        }
+    }
+
+    /**
+     * Dailymotion *channels* — the "Dailymotion Networks" aggregation from the
+     * request. Where [DailymotionProvider] searches by keyword, this walks the
+     * uploads of the drama channels that host complete-series compilations, so
+     * the rail also surfaces long-form episode sets, not only search hits.
+     */
+    private object DailymotionChannelsProvider : DramaProvider {
+        override val name = "dailymotion-channels"
+        private val channels = listOf(
+            "shortdrama", "dramaclips", "shortdramas"
+        )
+
+        override suspend fun fetch(count: Int): List<ShortItem> {
+            val perChannel = (count / channels.size).coerceAtLeast(3)
+            val candidates = coroutineScope {
+                channels.map { channel ->
+                    async {
+                        runCatching { channelVideos(channel, perChannel) }.getOrDefault(emptyList())
+                    }
+                }.awaitAll().flatten()
+            }.distinctBy { it.id }
+
+            return coroutineScope {
+                candidates.map { hit ->
+                    async {
+                        withTimeoutOrNull(RESOLVE_TIMEOUT_MS) {
+                            runCatching { DailymotionProvider.resolveHls(hit.id) }.getOrNull()
+                        }?.let { hls ->
+                            buildItem(
+                                title = hit.title,
+                                author = "Dailymotion",
+                                streamUrl = hls,
+                                thumbnail = hit.thumbnail,
+                                source = ShortsSourceType.DRAMA,
+                                durationSeconds = hit.duration
+                            )
+                        }
+                    }
+                }.awaitAll().filterNotNull()
+            }.take(count)
+        }
+
+        private suspend fun channelVideos(channel: String, limit: Int): List<DmHit> {
+            val url = "https://api.dailymotion.com/user/$channel/videos" +
+                "?fields=id,title,duration,thumbnail_360_url&limit=$limit"
+            val body = get(url)
+            val list = JSONObject(body).optJSONArray("list") ?: return emptyList()
+            return (0 until list.length()).mapNotNull { i ->
+                list.optJSONObject(i)?.let {
+                    DmHit(
+                        id = it.optString("id"),
+                        title = it.optString("title"),
+                        duration = it.optLong("duration"),
+                        thumbnail = it.optString("thumbnail_360_url")
+                    )
+                }
+            }
+        }
+    }
+
+    /**
      * iptv-org's public category playlists. Key-free and stable, so it is the
      * rail's floor: it always yields title + `.m3u8` pairs even when every
      * scraped provider above is unreachable.
@@ -285,8 +375,9 @@ class DramaShortsSource : ShortsSource {
     }
 
     private val PROVIDERS = listOf(
-        DailymotionProvider, IptvOrgProvider, DramaBoxProvider,
-        DramaShortsProvider, ShorticalProvider, FlickReelsProvider, ShortsDramaProvider
+        DailymotionProvider, DailymotionChannelsProvider, IptvOrgProvider,
+        ChartDramaProvider, DramaBoxProvider, DramaShortsProvider,
+        ShorticalProvider, FlickReelsProvider, ShortsDramaProvider
     )
 
     /** Internal so unit tests can exercise the parsers without a network. */

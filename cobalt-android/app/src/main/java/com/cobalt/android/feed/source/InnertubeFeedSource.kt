@@ -1,6 +1,9 @@
 package com.cobalt.android.feed.source
 
 import com.cobalt.android.feed.model.FeedItem
+import com.cobalt.android.feed.model.SearchChannel
+import com.cobalt.android.feed.model.SearchPlaylist
+import com.cobalt.android.feed.model.SearchResults
 import com.cobalt.android.feed.model.FeedSourceType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -64,13 +67,44 @@ class InnertubeFeedSource(
         // Secondary: rotating search queries, for volume/variety.
         for (query in FeedQueryFeeder.nextQueries(QUERIES_PER_FETCH)) {
             if (collected.size >= count * 2) break
-            for (item in parseSearch(search(query))) {
+            for (item in parseSearch(searchRaw(query))) {
                 collected.putIfAbsent(item.videoId, item)
             }
         }
 
         collected.values.filter { it.durationSeconds > MIN_REGULAR_SECONDS }.take(count)
     }
+
+    /**
+     * One-off search for a specific user query (the header's free-text path),
+     * as opposed to the rotating evergreen query pool [fetchFeed] blends in.
+     * Returns videos, channels and playlists together — YouTube's search page
+     * interleaves all three renderers, so a videos-only parse would silently
+     * drop the channel the user was obviously looking for.
+     */
+    suspend fun searchAll(query: String, count: Int = 30): SearchResults =
+        withContext(Dispatchers.IO) {
+            val json = searchRaw(query)
+            SearchResults(
+                videos = parseSearch(json).filter(::isRegularOrUnknown).take(count),
+                channels = parseChannels(json).take(count),
+                playlists = parsePlaylists(json).take(count)
+            )
+        }
+
+    /** Videos-only view of [searchAll], kept for callers that only want tiles. */
+    suspend fun searchVideos(query: String, count: Int = 30): List<FeedItem> =
+        searchAll(query, count).videos
+
+    /**
+     * Regular-length video, or one whose length the parser couldn't read
+     * (live streams and premieres carry no `lengthText`). Unknown lengths are
+     * kept rather than dropped: a Shorts-length *known* item is left to the
+     * Shorts tab, but hiding something the parser simply couldn't measure
+     * would turn a parser gap into a missing search result.
+     */
+    private fun isRegularOrUnknown(item: FeedItem): Boolean =
+        item.durationSeconds <= 0 || item.durationSeconds > MIN_REGULAR_SECONDS
 
     // ── Network ─────────────────────────────────────────────────────────────
 
@@ -82,7 +116,7 @@ class InnertubeFeedSource(
         }
     )
 
-    private fun search(query: String): String? = post(
+    private fun searchRaw(query: String): String? = post(
         url = "https://www.youtube.com/youtubei/v1/search?key=$WEB_CLIENT_KEY",
         body = JSONObject().apply {
             put("query", query)
@@ -131,6 +165,65 @@ class InnertubeFeedSource(
             if (id.length == 11) out.add(toFeedItem(id, r))
         }
         return out
+    }
+
+    internal fun parseChannels(json: String?): List<SearchChannel> =
+        json?.let { runCatching { parseChannelRenderers(JSONObject(it)) }.getOrDefault(emptyList()) }
+            .orEmpty()
+
+    internal fun parsePlaylists(json: String?): List<SearchPlaylist> =
+        json?.let { runCatching { parsePlaylistRenderers(JSONObject(it)) }.getOrDefault(emptyList()) }
+            .orEmpty()
+
+    private fun parseChannelRenderers(root: JSONObject): List<SearchChannel> {
+        val out = mutableListOf<SearchChannel>()
+        walk(root, "channelRenderer") { r ->
+            val id = r.optString("channelId")
+            if (id.isNotBlank()) {
+                out.add(
+                    SearchChannel(
+                        channelId = id,
+                        name = text(r.optJSONObject("title")) ?: "Channel",
+                        avatarUrl = thumbnailUrl(r.optJSONObject("thumbnail")),
+                        subscriberText = text(r.optJSONObject("videoCountText"))
+                            ?: text(r.optJSONObject("subscriberCountText")).orEmpty()
+                    )
+                )
+            }
+        }
+        return out
+    }
+
+    private fun parsePlaylistRenderers(root: JSONObject): List<SearchPlaylist> {
+        val out = mutableListOf<SearchPlaylist>()
+        walk(root, "playlistRenderer") { r ->
+            val id = r.optString("playlistId")
+            if (id.isNotBlank()) {
+                // playlistRenderer carries "thumbnails" as a bare array (not a
+                // "thumbnail"/"thumbnails" object like the other renderers).
+                val thumbs = r.optJSONArray("thumbnails")
+                val thumb = thumbs?.let { arr ->
+                    if (arr.length() == 0) null else arr.getJSONObject(arr.length() - 1).optString("url")
+                }.orEmpty()
+                out.add(
+                    SearchPlaylist(
+                        playlistId = id,
+                        title = text(r.optJSONObject("title")) ?: "Playlist",
+                        thumbnailUrl = thumb,
+                        videoCountText = text(r.optJSONObject("videoCountText"))
+                            ?: r.optString("videoCount").let { if (it.isBlank()) "" else "$it videos" }
+                    )
+                )
+            }
+        }
+        return out
+    }
+
+    /** Last (largest) thumbnail URL from a `{"thumbnails":[...]}` object. */
+    private fun thumbnailUrl(node: JSONObject?): String {
+        val arr = node?.optJSONArray("thumbnails") ?: return ""
+        if (arr.length() == 0) return ""
+        return arr.getJSONObject(arr.length() - 1).optString("url")
     }
 
     private fun toFeedItem(videoId: String, r: JSONObject): FeedItem {

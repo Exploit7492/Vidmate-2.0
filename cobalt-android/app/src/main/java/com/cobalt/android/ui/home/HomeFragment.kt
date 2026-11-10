@@ -10,6 +10,7 @@ import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import com.cobalt.android.databinding.FragmentHomeBinding
 import com.cobalt.android.link.LinkResolverRepository
+import com.cobalt.android.ui.DownloadQueueSheet
 import com.cobalt.android.ui.downloads.PlaylistDownloadDialog
 import com.cobalt.android.ui.downloads.ResolutionPickerDialog
 
@@ -50,17 +51,25 @@ class HomeFragment : Fragment() {
         arguments?.getString("pending_url")?.let { url ->
             viewModel.setPendingUrl(url)
         }
+        // Free-text from the header's search field lands here as "pending_search".
+        arguments?.getString("pending_search")?.let { query ->
+            viewModel.search(query)
+        }
 
         binding.homeCompose.setViewCompositionStrategy(
             ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed
         )
         binding.homeCompose.setContent {
-            HomeScreen(viewModel) {
-                if (childFragmentManager.findFragmentByTag(PlaylistDownloadDialog.TAG) == null) {
-                    PlaylistDownloadDialog.newInstance()
-                        .show(childFragmentManager, PlaylistDownloadDialog.TAG)
-                }
-            }
+            HomeScreen(
+                viewModel = viewModel,
+                onPlaylist = {
+                    if (childFragmentManager.findFragmentByTag(PlaylistDownloadDialog.TAG) == null) {
+                        PlaylistDownloadDialog.newInstance()
+                            .show(childFragmentManager, PlaylistDownloadDialog.TAG)
+                    }
+                },
+                onOpenDownloads = { openDownloadsAndAlerts() }
+            )
         }
 
         // Phase 6: show the resolution picker once a link resolves.
@@ -84,10 +93,34 @@ class HomeFragment : Fragment() {
                 ResolutionPickerDialog.newInstance().show(childFragmentManager, ResolutionPickerDialog.TAG)
             }
         }
+
+        // A playlist search result opens the batch dialog with the playlist URL
+        // already filled in.
+        viewModel.playlistUrl.observe(viewLifecycleOwner) { url ->
+            if (!url.isNullOrBlank()) {
+                viewModel.onPlaylistOpened()
+                if (childFragmentManager.findFragmentByTag(PlaylistDownloadDialog.TAG) == null) {
+                    PlaylistDownloadDialog.newInstance(url)
+                        .show(childFragmentManager, PlaylistDownloadDialog.TAG)
+                }
+            }
+        }
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+
+    /**
+     * Opens the same downloads + alerts sheet the header's bell opens, so the
+     * Home entry card and the bell are one surface rather than two.
+     */
+    private fun openDownloadsAndAlerts() {
+        if (childFragmentManager.findFragmentByTag(DownloadQueueSheet.TAG) != null) return
+        DownloadQueueSheet.newInstance().also { sheet ->
+            sheet.onRetry = { record -> viewModel.setPendingUrl(record.originalUrl) }
+            sheet.show(childFragmentManager, DownloadQueueSheet.TAG)
+        }
     }
 }
