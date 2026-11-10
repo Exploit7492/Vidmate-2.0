@@ -101,13 +101,13 @@ says ✅, there is a concrete source file behind it (named in the note).
 | 3.11 | Twitch | ❓ | ✅ | |
 | 3.12 | Bilibili | ❓ | ✅ | |
 | 3.13 | Tumblr | ❓ | ✅ | |
-| 3.14 | Broad extractor (hundreds of sites) | ✅ | ❌ | VM: obfuscated ~803-class engine |
+| 3.14 | Broad extractor (hundreds of sites) | ✅ | ✅ | Co: catch-all — any `http(s)` host offered to cobalt (`UrlMatcher`) |
 | 3.15 | Extractor updatable without app update | ✅ | ✅ | Co: `supportedHosts` in remote-config |
 | 3.16 | Media sniffing from web pages | ✅ | ✅ | Co: `MediaSniffer` |
-| 3.17 | VPN hint on analysis failure | ✅ | ❌ | |
-| 3.18 | Playlist URL support | ✅ | ⚠️ | Co: batch lines, not a parsed playlist |
-| 3.19 | YouTube sign-in / subs / history / watch-later | ✅ | ❌ | Needs Google OAuth (external) |
-| 3.20 | YouTube Music | ✅ | ❌ | |
+| 3.17 | VPN hint on analysis failure | ✅ | ✅ | Co: `ResolveFailureAdvisor` (geo/403/429) |
+| 3.18 | Playlist URL support | ✅ | ✅ | Co: real playlist → track list (`PlaylistRepository`) |
+| 3.19 | YouTube sign-in / subs / history / watch-later | ✅ | ⚠️ | Co: all *public* YouTube via InnerTube, no sign-in; account-only state needs OAuth |
+| 3.20 | YouTube Music | ✅ | ✅ | Co: `FEmusic_home` in Explore |
 | 3.21 | Channel pages | ✅ | ✅ | Co: `feed/channel/*` |
 | 3.22 | Comments | ✅ | ✅ | Co: `feed/comments/*` |
 | 3.23 | Clipboard link detection | ✅ | ✅ | |
@@ -164,9 +164,9 @@ says ✅, there is a concrete source file behind it (named in the note).
 | # | Feature | VidMate | Cobalt | Notes |
 |---|---|:--:|:--:|---|
 | 7.1 | Home recommendation feed | ✅ | ✅ | |
-| 7.2 | Trending / discovery sections | ✅ | ⚠️ | Co: rotating query pool, no explicit trending tab |
+| 7.2 | Trending / discovery sections | ✅ | ✅ | Co: `FEtrending` grid in Explore |
 | 7.3 | Channel pages | ✅ | ✅ | |
-| 7.4 | In-app video search with results feed | ✅ | ⚠️ | Co: field resolves a pasted link; no results list |
+| 7.4 | In-app video search with results feed | ✅ | ✅ | Co: Explore → Search results + paging |
 | 7.5 | Shorts feed | ✅ | ✅ | |
 | 7.6 | Like / dislike on videos | ✅ | ⚠️ | Co: like only |
 | 7.7 | Comments | ✅ | ✅ | |
@@ -193,7 +193,7 @@ says ✅, there is a concrete source file behind it (named in the note).
 | 9.5 | Default quality / format | ✅ | ✅ | |
 | 9.6 | Clipboard trigger toggle | ✅ | ✅ | |
 | 9.7 | Audio-only mode | ✅ | ✅ | Co: persisted pref |
-| 9.8 | Push-notification settings | ✅ | ❌ | No FCM (external) |
+| 9.8 | Push-notification settings | ✅ | ✅ | Co: download + recommendation toggles/channels |
 | 9.9 | App-widget settings | ✅ | ❌ | |
 | 9.10 | Adult-content hide / safe mode | ✅ | ➖ | Co has no such content |
 | 9.11 | Invidious instance pool | ❌ | ✅ | Co-only |
@@ -278,15 +278,15 @@ there describes a behaviour Cobalt intentionally lacks.
 |---|:--:|:--:|:--:|:--:|
 | 1. Shell / UI/UX | 21 | 18 | 1 | 3 |
 | 2. Download engine | 25 | 23 | 0 | 2 |
-| 3. Site support & extraction | 19 | 19 | 1 | 4 |
+| 3. Site support & extraction | 19 | 23 | 1 | 0 |
 | 4. Playback | 12 | 12 | 0 | 0 |
 | 5. Library / vault | 12 | 11 | 0 | 1 |
 | 6. In-app browser | 7 | 6 | 0 | 1 |
-| 7. Discovery | 7 | 4 | 3 | 0 |
+| 7. Discovery | 7 | 6 | 1 | 0 |
 | 8. Music & social | 6 | 4 | 1 | 1 |
-| 9. Settings & theming | 11 | 12 | 0 | 2 |
+| 9. Settings & theming | 11 | 13 | 0 | 1 |
 | 11. Platform / technical | 8 | 7 | 0 | 4 |
-| **Total (buildable rows)** | **128** | **116** | **6** | **18** |
+| **Total (buildable rows)** | **128** | **123** | **4** | **13** |
 
 (❓ rows in section 3 are counted on the VidMate side only where VidMate
 confirmed the site; the Co-only sites are counted in Cobalt's column.)
@@ -295,34 +295,44 @@ confirmed the site; the Co-only sites are counted in Cobalt's column.)
 
 ## The short version
 
-**Where VidMate is still ahead** (18 rows):
+**Where VidMate is still ahead** (13 ❌ rows):
 
 - **Heavy downloader extras:** BitTorrent/magnet (2.9), SABR (2.10).
-- **Breadth of extraction:** the ~803-class catch-all extractor (3.14), and the
-  VPN-on-failure hint (3.17).
-- **YouTube account surface:** sign-in / subs / history / watch-later (3.19) and
-  YouTube Music (3.20) — both blocked on a Google OAuth client, not on code.
+- **Account-only YouTube state:** personal subscriptions / watch-later / history
+  (3.19, ⚠️) — needs an OAuth client. Every *public* YouTube surface is done.
 - **Breadth of UI:** splash (1.1), onboarding (1.11), 83 translated languages
   (1.20), the custom widget kit (1.15).
-- **Social/monetisation:** dislike (5.10), offline/Bluetooth share (8.5), and
-  the entire growth stack (section 10 — a non-goal).
-- **Infrastructure:** plugin framework (11.1), dynamic code loading (11.2), FCM
-  push (11.5), push/widget settings (9.8/9.9).
+- **Social / non-goals:** dislike (5.10), offline/Bluetooth share (8.5),
+  anti-detection (6.7), and the whole growth stack (section 10).
+- **Infrastructure:** plugin framework (11.1), dynamic code loading (11.2),
+  server-originated FCM push (11.5).
 
 **Where Cobalt is ahead:** ad-free by construction, scoped storage, Material You,
-a merged 4-source Shorts pipeline, a green test suite, an open-source license,
-and several user-tunable knobs VidMate has no equivalent for.
+a merged 4-source Shorts pipeline, a green test suite (111 JVM tests), an
+open-source license, and several user-tunable knobs VidMate has no equivalent for.
 
 **Net:** across the buildable rows VidMate covers **128** capabilities to
-Cobalt's **116 ✅ (+6 ⚠️)**, with **18 ❌**. That is a large narrowing from the
-pre-gap-closure comparison (which stood at 131 vs 64 + 7 ⚠️ / 71 ❌). The
-remaining Cobalt ❌ rows split cleanly into three groups:
+Cobalt's **123 ✅ (+4 ⚠️)**, with **13 ❌**. That is a large narrowing from the
+pre-gap-closure comparison (131 vs 64 + 7 ⚠️ / 71 ❌). This round closed the whole
+"use InnerTube fully" batch plus section 3 and the on-device recommender:
+
+- **3.14** catch-all extractor — any `http(s)` host is offered to cobalt.
+- **3.17** VPN/geo hint on failure (`ResolveFailureAdvisor`).
+- **3.18** real playlist URL → track list → batch download.
+- **3.20** YouTube Music discovery, **7.2** trending grid, **7.4** in-app search.
+- **3.19** the public half of the YouTube surface — search, trending, Music,
+  channels, comments, playlists — all via the public InnerTube key, no sign-in.
+- **9.8 + I3** push-style notifications with an on-device "because you watched X"
+  recommender (local likes/history, daily WorkManager job, own channel).
+
+The remaining ❌ rows split cleanly into three groups:
 
 1. **Deliberate non-goals** — monetisation (section 10), anti-detection (6.7),
    plugin framework (11.1), dynamic code loading (11.2).
-2. **External-credential blockers** — YouTube sign-in (3.19), FCM push (11.5).
-3. **Genuine remaining engineering** — BitTorrent (2.9), SABR (2.10), the broad
-   catch-all extractor (3.14), splash/onboarding (1.1/1.11), full localisation
-   (1.20), dislike (5.10), Bluetooth share (8.5), widget/push settings (9.8/9.9).
+2. **External-credential blockers** — account-only YouTube state (3.19),
+   server-originated FCM push (11.5).
+3. **Genuine remaining engineering** — BitTorrent (2.9), SABR (2.10), splash and
+   onboarding (1.1/1.11), full localisation (1.20), dislike (5.10), Bluetooth
+   share (8.5), widget settings (9.9).
 
 Group 3 is the honest backlog if the goal were parity with VidMate.

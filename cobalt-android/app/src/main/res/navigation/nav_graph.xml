@@ -47,6 +47,12 @@
         tools:layout="@layout/fragment_media_library" />
 
     <fragment
+        android:id="@+id/nav_explore"
+        android:name="com.cobalt.android.ui.explore.ExploreFragment"
+        android:label="@string/explore_title"
+        tools:layout="@layout/fragment_explore" />
+
+    <fragment
         android:id="@+id/nav_games"
         android:name="com.cobalt.android.ui.games.GamesFragment"
         android:label="@string/games_title"

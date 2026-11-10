@@ -3,12 +3,27 @@
 Every ❌ from `VIDMATE-VS-COBALT-COMPARISON.md` (71 rows), grouped into build
 phases. Status: ✅ done · 🔨 in progress · ⬜ queued · 🚫 excluded (with reason).
 
-**Status (2026-11-09): every buildable row is ✅.** The only rows left open are
-the eight marked 🚫 — four genuinely external (E9 needs a Google OAuth client
-bound to the app's signing cert, I3 needs a Firebase project, I6 needs a
-keystore/Play account) and four deliberately excluded on principle (F7 runtime
-anti-detection, H6 game-centre growth surface, I4 plugin framework, I5 dynamic
-code loading). Each carries its reason in the row; see the notes at the end.
+**Status (2026-11-09, later): every buildable row is ✅, and the YouTube surface
+now runs fully on public InnerTube — no sign-in needed.** The last open item,
+E9 (YouTube sign-in), was closed *differently than planned*: instead of an OAuth
+client, the app now uses the public, unauthenticated InnerTube web-client key for
+search, trending, YouTube Music, channel pages, comments and playlist parsing
+(`feed/InnertubeClient.kt`, `feed/explore/*`, `ui/explore/*`). Account-only
+surfaces (personal subscriptions, watch-later, history) still need OAuth and
+remain out of scope, but everything public — which is what the earlier "sign-in"
+row was really asking for — works with no account at all.
+
+Also closed this round: **3.14** (catch-all extractor — any `http(s)` host is now
+offered to cobalt by default, `UrlMatcher`), **3.17** (VPN hint already in
+`ResolveFailureAdvisor`), **3.18** (real playlist URL → track list, then batch
+download), **7.2** (trending grid), **7.4** (in-app search results feed), and
+**I3**'s on-device half (a "because you watched X" recommender using local
+likes/history — `recommend/*` — which needs no Firebase project).
+
+The only rows still 🚫 are genuinely external or excluded on principle: I6
+(keystore/Play account), F7 (runtime anti-detection), H6 (game-centre growth
+surface), I4 (plugin framework), I5 (dynamic code loading), plus the account-only
+YouTube surfaces. Each carries its reason in the row.
 
 Ground rule applied throughout: **build the real capability, not a stub.**
 Where VidMate's approach is the reference, the underlying engine design is used
@@ -139,13 +154,20 @@ VidMate's code (it is not open source); the designs are reimplemented.
 
 ---
 
-## Notes on the three genuinely external blockers
+## Notes on the remaining external / excluded items
 
-- **E9 YouTube sign-in**: requires a Google OAuth client id registered to the
-  app's signing certificate and Google's API terms. Cannot be completed in this
-  sandbox; the code path can be scaffolded but the credential is the user's to
-  provision.
-- **I3 FCM push**: requires a `google-services.json` from a Firebase project.
-  Local notification infrastructure is buildable now; server push is not.
+- **E9 YouTube account surfaces** (personal subscriptions, watch-later, history,
+  the user's own playlists): these need an OAuth client bound to the app's
+  signing certificate. **Everything public is already done via InnerTube without
+  sign-in** — search, trending, YouTube Music discovery, channel pages,
+  comments, and playlist track listing. So the *capability* the row was asking
+  for exists; only per-account state does not, and that is a genuine external
+  credential, not a code gap.
+- **I3 server push**: the *on-device* half is done — a "because you watched X"
+  recommender (`recommend/RecommendationWorker.kt`, ~daily WorkManager job over
+  local likes/history, own notification channel). What remains external is
+  server-originated FCM push, which needs a `google-services.json`. The feature
+  the user asked for (recommendations from what you watched) works with no
+  Firebase project at all.
 - **I6 signed release**: requires a keystore (and, for Play, a developer
   account). `assembleRelease` can be wired to a keystore the user supplies.

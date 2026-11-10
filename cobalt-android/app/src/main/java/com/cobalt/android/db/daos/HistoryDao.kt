@@ -17,4 +17,11 @@ interface HistoryDao {
 
     @Query("DELETE FROM history")
     suspend fun clearAll()
+
+    /** Most-recent history rows, for the recommendation engine (one-shot). */
+    @Query("SELECT * FROM history ORDER BY timestamp DESC LIMIT :limit")
+    suspend fun getRecent(limit: Int): List<HistoryEntity>
+
+    @Query("SELECT refId FROM history")
+    suspend fun allRefIds(): List<String>
 }

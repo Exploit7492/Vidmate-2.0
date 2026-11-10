@@ -20,4 +20,11 @@ interface LikedDao {
 
     @Query("SELECT * FROM liked ORDER BY likedAt DESC")
     fun getAllLive(): LiveData<List<LikedEntity>>
+
+    /** Most-recent likes, for the recommendation engine (one-shot, not LiveData). */
+    @Query("SELECT * FROM liked ORDER BY likedAt DESC LIMIT :limit")
+    suspend fun getRecent(limit: Int): List<LikedEntity>
+
+    @Query("SELECT videoId FROM liked")
+    suspend fun allVideoIds(): List<String>
 }

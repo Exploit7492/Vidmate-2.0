@@ -122,6 +122,7 @@ fun SettingsScreen(
             ToggleRow("clipboard trigger", state.clipboardTrigger, viewModel::setClipboardTrigger)
             ToggleRow("download notifications", state.notificationsEnabled, viewModel::setNotificationsEnabled)
             ToggleRow("notify when a download finishes", state.notifyOnComplete, viewModel::setNotifyOnComplete)
+            ToggleRow("recommend videos for me", state.recommendationsEnabled, viewModel::setRecommendationsEnabled)
 
             Spacer(Modifier.height(24.dp))
             SectionLabel("invidious instances (one per line)")

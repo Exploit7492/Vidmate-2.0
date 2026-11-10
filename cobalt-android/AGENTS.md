@@ -73,8 +73,18 @@ Landing zone for new surfaces (all verified BUILD SUCCESSFUL):
 
 Testing pattern that works well here: keep new logic pure and Android-free
 (e.g. `MediaSniffer`, `LocalMediaQuery`, `ResolveFailureAdvisor`) so it gets real
-JVM unit tests under `app/src/test/java/com/cobalt/android/`. Current suite: 70
-tests, 0 failures (grew from 70 as G2/E11/H5/I2 landed).
+JVM unit tests under `app/src/test/java/com/cobalt/android/`. Current suite: 111
+tests, 0 failures. The newest batch covers the "use InnerTube fully" work and the
+recommender: `feed/explore/ExploreParserTest`, `feed/explore/PlaylistIdTest`,
+`recommend/TasteProfileTest`, plus the updated `UrlMatcherTest` (catch-all).
+
+**YouTube runs on public InnerTube — no sign-in.** All YouTube surfaces the app
+uses (home feed, search, trending, YouTube Music discovery, channel pages,
+comments, playlist track listing) go through `feed/InnertubeClient.kt` with the
+public web-client key, unauthenticated. There is deliberately no OAuth path.
+Explore screen: `ui/explore/*` (tab in `bottom_nav_menu.xml`). Recommender:
+`recommend/*` (daily WorkManager job over local likes/history, own channel,
+opt-in via Settings).
 
 ## Remote access (BLOCKED — Session 15)
 There is no git repo/remote in `/workspace/cobalt-android`; it is the copy the

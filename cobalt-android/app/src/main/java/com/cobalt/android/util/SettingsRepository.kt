@@ -208,6 +208,16 @@ class SettingsRepository(context: Context) {
         get() = prefs.getBoolean("notify_on_complete", true)
         set(v) { prefs.edit().putBoolean("notify_on_complete", v).apply() }
 
+    /**
+     * Whether the on-device "because you watched X" recommender may post.
+     * Default off: a recommender is opt-in, unlike download notifications,
+     * because it is the app volunteering content rather than reporting on a
+     * task the user started.
+     */
+    var recommendationsEnabled: Boolean
+        get() = prefs.getBoolean("recommendations_enabled", false)
+        set(v) { prefs.edit().putBoolean("recommendations_enabled", v).apply() }
+
     /** Extra host suffixes fetched from remote config (Phase E7), persisted so
      *  a cold launch with no network still honours the last-known list. */
     var remoteExtraHosts: Set<String>

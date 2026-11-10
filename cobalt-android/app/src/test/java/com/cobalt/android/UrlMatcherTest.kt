@@ -21,7 +21,15 @@ class UrlMatcherTest {
     @Test fun twitchUrl() = assertTrue(UrlMatcher.isSupportedUrl("https://www.twitch.tv/channel"))
     @Test fun randomText() = assertFalse(UrlMatcher.isSupportedUrl("hello world"))
     @Test fun mailtoLink() = assertFalse(UrlMatcher.isSupportedUrl("mailto:user@example.com"))
-    @Test fun unsupportedSite() = assertFalse(UrlMatcher.isSupportedUrl("https://google.com/search?q=test"))
+    // Catch-all extractor: any http(s) host is offered to cobalt by default.
+    @Test fun unknownSiteIsAcceptedByDefault() = assertTrue(UrlMatcher.isSupportedUrl("https://google.com/search?q=test"))
+    @Test fun unknownSiteRejectedInStrictMode() = assertFalse(UrlMatcher.isSupportedUrl("https://google.com/search?q=test", strict = true))
+    @Test fun knownSiteAcceptedInStrictMode() = assertTrue(UrlMatcher.isSupportedUrl("https://youtu.be/abc", strict = true))
+    @Test fun isKnownHostMatchesApexAndSubdomain() {
+        assertTrue(UrlMatcher.isKnownHost("youtube.com"))
+        assertTrue(UrlMatcher.isKnownHost("www.youtube.com"))
+        assertFalse(UrlMatcher.isKnownHost("example.com"))
+    }
     @Test fun nullInput() = assertFalse(UrlMatcher.isSupportedUrl(null))
     @Test fun emptyInput() = assertFalse(UrlMatcher.isSupportedUrl(""))
     @Test fun bareHostNoScheme() = assertFalse(UrlMatcher.isSupportedUrl("youtube.com/watch?v=abc"))
@@ -48,6 +56,10 @@ class UrlMatcherTest {
     @Test fun extractReturnsNullWhenNoUrlInText() =
         assertNull(UrlMatcher.extractUrl("no link here at all"))
 
-    @Test fun extractReturnsNullForUnsupportedEmbedded() =
-        assertNull(UrlMatcher.extractUrl("check google: https://google.com/search?q=test"))
+    @Test fun extractReturnsUnknownUrlByDefault() =
+        assertEquals("https://google.com/search?q=test",
+            UrlMatcher.extractUrl("check google: https://google.com/search?q=test"))
+
+    @Test fun extractReturnsNullForUnsupportedEmbeddedInStrictMode() =
+        assertNull(UrlMatcher.extractUrl("check google: https://google.com/search?q=test", strict = true))
 }

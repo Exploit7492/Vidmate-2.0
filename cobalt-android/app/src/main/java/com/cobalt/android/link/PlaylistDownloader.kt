@@ -2,6 +2,8 @@ package com.cobalt.android.link
 
 import android.content.Context
 import com.cobalt.android.download.DownloadService
+import com.cobalt.android.feed.explore.ExploreRepository
+import com.cobalt.android.feed.explore.PlaylistRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -22,6 +24,7 @@ import kotlinx.coroutines.withContext
 class PlaylistDownloader(private val context: Context) {
 
     private val resolver = LinkResolverRepository(context)
+    private val playlists = PlaylistRepository()
 
     data class Result(val enqueued: Int, val failed: Int)
 
@@ -31,7 +34,18 @@ class PlaylistDownloader(private val context: Context) {
      */
     suspend fun downloadAll(text: String, cookies: String, userAgent: String): Result =
         withContext(Dispatchers.IO) {
-            val urls = text.lineSequence().map { it.trim() }.filter { it.isNotBlank() }.toList()
+            val lines = text.lineSequence().map { it.trim() }.filter { it.isNotBlank() }.toList()
+
+            // Expand any YouTube playlist URL to its real track list first, so
+            // "paste a playlist link, download it all" works. A playlist we
+            // can't read (private, or an account-only "Watch later") expands to
+            // nothing and falls back to being treated as a plain URL below.
+            val urls = lines.flatMap { line ->
+                val id = ExploreRepository.playlistId(line)
+                if (id == null) listOf(line)
+                else playlists.load(line)?.tracks?.map { it.watchUrl }?.ifEmpty { listOf(line) } ?: listOf(line)
+            }
+
             var ok = 0
             var failed = 0
             for (url in urls) {

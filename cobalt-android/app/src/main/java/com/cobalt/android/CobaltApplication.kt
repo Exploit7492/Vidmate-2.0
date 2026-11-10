@@ -2,6 +2,8 @@ package com.cobalt.android
 
 import android.app.Application
 import androidx.work.Configuration
+import com.cobalt.android.recommend.RecommendationNotifier
+import com.cobalt.android.recommend.RecommendationWorker
 import com.cobalt.android.shorts.source.ShortsQueryFeeder
 import com.cobalt.android.remoteconfig.RemoteConfigStore
 import com.cobalt.android.util.CrashHandler
@@ -18,6 +20,7 @@ class CobaltApplication : Application(), Configuration.Provider {
         // rest of startup is still captured and restarted.
         CrashHandler.install(this)
         NotificationHelper(this).createChannel()
+        RecommendationNotifier(this).createChannel()
         // Phase 13: apply the persisted theme mode before any Activity is
         // created — AppCompatDelegate.setDefaultNightMode() and
         // DynamicColors.applyToActivitiesIfAvailable() both need to run
@@ -37,6 +40,11 @@ class CobaltApplication : Application(), Configuration.Provider {
         // persisted cache so a cold launch with no network still honours the
         // last-known extractor list and tab set.
         RemoteConfigStore.seedFromCache(this)
+        // Resume the daily recommender if the user has it on. KEEP policy, so
+        // this is a no-op when the job is already scheduled.
+        if (settings.recommendationsEnabled) {
+            RecommendationWorker.schedule(this)
+        }
     }
 
     override val workManagerConfiguration: Configuration

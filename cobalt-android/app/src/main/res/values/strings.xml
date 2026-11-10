@@ -4,6 +4,11 @@
 
     <!-- Bottom navigation (VidMate-style 4-tab shell: Home / Library / Shorts / Me) -->
     <string name="nav_home">Home</string>
+    <string name="nav_explore">Explore</string>
+    <string name="explore_title">Explore</string>
+    <string name="channel_recommendations_name">Recommendations</string>
+    <string name="channel_recommendations_desc">Suggested videos based on what you like and watch</string>
+    <string name="setting_recommendations">recommend videos for me</string>
     <string name="nav_library">Library</string>
     <string name="nav_shorts">Shorts</string>
     <string name="nav_me">Me</string>

@@ -83,6 +83,7 @@ class MainActivity : AppCompatActivity() {
         val nav = findViewById<BottomNavigationView>(R.id.navBottom)
         val byName = mapOf(
             "home" to R.id.nav_home,
+            "explore" to R.id.nav_explore,
             "library" to R.id.nav_library,
             "shorts" to R.id.nav_shorts,
             "me" to R.id.nav_me

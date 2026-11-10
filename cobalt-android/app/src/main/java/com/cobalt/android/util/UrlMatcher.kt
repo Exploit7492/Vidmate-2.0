@@ -74,13 +74,26 @@ object UrlMatcher {
     // Matches http(s):// followed by any non-whitespace characters
     private val URL_REGEX = Regex("""https?://\S+""")
 
-    fun isSupportedUrl(text: String?): Boolean {
+    /**
+     * True when [text] is a link the app will offer to download.
+     *
+     * By default this is deliberately **permissive**: any `http(s)` URL is
+     * accepted, not just the [SUPPORTED_HOSTS] list. The list is a hint for
+     * fast paths and for the few sites whose share text is worth pattern-
+     * matching, but the extractor itself is a catch-all — cobalt resolves far
+     * more than this list names, and rejecting an unknown host before the user
+     * can even try is the one way to guarantee a "can't download this" that the
+     * backend could actually have handled. Pass `strict = true` to require a
+     * known host (used where a false positive would be costly, e.g. sniffing).
+     */
+    fun isSupportedUrl(text: String?, strict: Boolean = false): Boolean {
         if (text.isNullOrBlank()) return false
         val trimmed = text.trim()
         if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) return false
         return try {
             val url = java.net.URL(trimmed)
             val host = url.host?.lowercase() ?: return false
+            if (!strict) return true
             // Built-in hosts, plus any fetched from remote config (Phase E7) so
             // the extractor list can grow without an app release.
             val extra = com.cobalt.android.remoteconfig.RemoteConfigStore.extraHosts()
@@ -90,23 +103,30 @@ object UrlMatcher {
         }
     }
 
+    /** True when [host] is one of the curated hosts (or a remote-config extra). */
+    fun isKnownHost(host: String): Boolean {
+        val h = host.lowercase()
+        val extra = com.cobalt.android.remoteconfig.RemoteConfigStore.extraHosts()
+        return (SUPPORTED_HOSTS + extra).any { h == it || h.endsWith(".$it") }
+    }
+
     /**
      * Extracts the first supported URL from [text], which may contain surrounding
      * prose (e.g. share text from social apps: "Check this out: https://youtu.be/abc").
      * Trailing punctuation characters are stripped before validation.
      */
-    fun extractUrl(text: String?): String? {
+    fun extractUrl(text: String?, strict: Boolean = false): String? {
         if (text.isNullOrBlank()) return null
 
         // Fast path: entire text is a bare URL
         val trimmed = text.trim()
-        if (isSupportedUrl(trimmed)) return trimmed
+        if (isSupportedUrl(trimmed, strict)) return trimmed
 
         // Slow path: scan for the first embedded URL
         for (match in URL_REGEX.findAll(text)) {
             // Strip trailing punctuation that sentence punctuation may have attached
             val candidate = match.value.trimEnd('.', ',', '!', '?', ')', ']', '}', '"', '\'', ';', ':')
-            if (isSupportedUrl(candidate)) return candidate
+            if (isSupportedUrl(candidate, strict)) return candidate
         }
         return null
     }

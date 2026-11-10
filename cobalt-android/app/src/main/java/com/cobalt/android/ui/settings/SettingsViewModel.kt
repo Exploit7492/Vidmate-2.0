@@ -43,7 +43,8 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         val appLanguage: String,
         val contentRegion: String,
         val notificationsEnabled: Boolean,
-        val notifyOnComplete: Boolean
+        val notifyOnComplete: Boolean,
+        val recommendationsEnabled: Boolean
     )
 
     private val _state = MutableStateFlow(readState())
@@ -66,7 +67,8 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             appLanguage = settings.appLanguage,
             contentRegion = settings.contentRegion,
             notificationsEnabled = settings.notificationsEnabled,
-            notifyOnComplete = settings.notifyOnComplete
+            notifyOnComplete = settings.notifyOnComplete,
+            recommendationsEnabled = settings.recommendationsEnabled
         )
     }
 
@@ -136,6 +138,17 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     fun setNotifyOnComplete(value: Boolean) {
         settings.notifyOnComplete = value
         _state.value = _state.value.copy(notifyOnComplete = value)
+    }
+
+    /** Toggles the on-device recommender and (un)schedules its daily job. */
+    fun setRecommendationsEnabled(value: Boolean) {
+        settings.recommendationsEnabled = value
+        _state.value = _state.value.copy(recommendationsEnabled = value)
+        if (value) {
+            com.cobalt.android.recommend.RecommendationWorker.schedule(getApplication<Application>())
+        } else {
+            com.cobalt.android.recommend.RecommendationWorker.cancel(getApplication<Application>())
+        }
     }
 
     /** Folds in the old `SettingsSheet`'s "clear history" action (it cleared
