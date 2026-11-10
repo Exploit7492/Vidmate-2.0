@@ -21,7 +21,7 @@ import androidx.core.os.bundleOf
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
-import androidx.navigation.findNavController
+import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.cobalt.android.databinding.ActivityMainBinding
 import com.cobalt.android.link.SearchIntentClassifier
@@ -49,6 +49,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var settings: SettingsRepository
+    private lateinit var navController: NavController
     private val queueViewModel: DownloadQueueViewModel by viewModels()
 
     private val notifPermission = registerForActivityResult(
@@ -63,11 +64,18 @@ class MainActivity : AppCompatActivity() {
 
         settings = SettingsRepository(this)
 
-        val navController = findNavController(R.id.navHost)
+        // The NavHostFragment is added by FragmentContainerView's inflation
+        // transaction. Flush any pending transaction before asking for the
+        // controller, and read it off the fragment directly so a deferred
+        // attach can never surface as "does not have a NavController set".
+        supportFragmentManager.executePendingTransactions()
+        val navHost = supportFragmentManager
+            .findFragmentById(R.id.navHost) as NavHostFragment
+        navController = navHost.navController
         val nav = findViewById<BottomNavigationView>(R.id.navBottom)
         nav.setupWithNavController(navController)
         applyRemoteTabs()
-        setupFloatingShortsTab(navController, nav)
+        setupFloatingShortsTab(navController)
         setupHeader()
         observeDownloadQueue()
         handleFirstLaunch()
@@ -82,8 +90,7 @@ class MainActivity : AppCompatActivity() {
      * Its flare is dimmed with it so the glow tracks the active state.
      */
     private fun setupFloatingShortsTab(
-        navController: NavController,
-        nav: BottomNavigationView
+        navController: NavController
     ) {
         val tab = findViewById<View>(R.id.shortsTab)
         val flare = findViewById<View>(R.id.shortsFlare)
@@ -154,7 +161,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun openSearch(query: String) {
-        findNavController(R.id.navHost).navigate(
+        navController.navigate(
             R.id.nav_home,
             bundleOf("pending_search" to query)
         )
@@ -303,14 +310,14 @@ class MainActivity : AppCompatActivity() {
     // ── URL routing ──────────────────────────────────────────────────────────
 
     private fun openInBrowser(url: String) {
-        findNavController(R.id.navHost).navigate(
+        navController.navigate(
             R.id.nav_browser,
             bundleOf("url" to url)
         )
     }
 
     private fun submitUrl(url: String) {
-        findNavController(R.id.navHost).navigate(
+        navController.navigate(
             R.id.nav_home,
             bundleOf("pending_url" to url)
         )
