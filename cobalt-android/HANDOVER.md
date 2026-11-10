@@ -185,6 +185,70 @@ detail was available, and this sandbox cannot run the app to reproduce
 it; get a specific symptom (black screen? infinite spinner? crash? one
 source or all four?) before guessing at a fix.
 
+## Continuation (VidMate 2.0 rebrand + Shorts drama rail + floating tab)
+
+The project was rebranded to **VidMate 2.0** and published at
+`github.com/Exploit7492/Vidmate-2.0` (branch `shorts-drama-source`, PR #1),
+built on the VidMate reverse-engineering work.
+
+Shorts drama rail (`shorts/source/DramaShortsSource.kt`) is now an aggregator
+over public, key-free catalogues: **Dailymotion** keyword search and a second
+Dailymotion **channels** provider (complete-series compilations), **iptv-org**
+category playlists as the stable floor, and best-effort **ChartDrama** plus the
+bot-walled sites (DramaBox / DramaShorts / Shortical / FlickReels /
+shorts-drama.com). Each provider fails closed independently and only emits
+items with a usable stream URL. New test coverage keeps the suite at 147 tests,
+0 failures.
+
+App shell: the Shorts entry in the bottom bar is now a **floating rounded pill
+lifted above the bar** with a circular accent flare behind it. The bar's own
+middle slot is hidden (its space reserved) so the pill is the sole Shorts
+affordance; Home and Settings sit either side. See
+`MainActivity.setupFloatingShortsTab`, `activity_main.xml`,
+`res/drawable/bg_shorts_tab.xml`, `res/drawable/bg_shorts_flare.xml`.
+
+Debug APKs (all ABIs) are attached to the GitHub release `v2.0-debug` and also
+served over the workspace host for Termux installs.
+
+## Continuation (part 4, same session): startup crash fixed, icon + header corrected
+
+The user reported the app **crashed before the home page**, that the splash
+logo still had a **white background**, and that the **static "VidMate 2.0"
+header was still there**. All three reproduced/root-caused and fixed, each
+now guarded by a test.
+
+- **Crash — reproduced on the JVM, not guessed.** Added Robolectric
+  (`StartupSmokeTest`) and launched the real activities. `MainActivity.onCreate`
+  threw `IllegalStateException: Activity MainActivity does not have a
+  NavController set on <R.id.navHost>` at the old
+  `findNavController(R.id.navHost)` call: `FragmentContainerView` inflates the
+  `NavHostFragment` in a *pending* transaction, so the fragment isn't attached
+  yet when the activity asks for the controller. Fix: flush pending transactions
+  and read `navHost.navController` off the fragment, cached in a field and
+  reused everywhere. `everyBottomTab_destination_loads_withoutCrash` now
+  navigates every bottom destination as a regression guard.
+- **Static header — root cause was the theme.** `Theme.Cobalt`'s parent was
+  `Theme.Material3.DayNight` (which has an ActionBar), so Material3 drew a
+  title strip labelled with `app_name`. Parent is now
+  `Theme.Material3.DayNight.NoActionBar`; the Compose `HeaderBar` now applies
+  `WindowInsets.statusBars` padding itself (nothing else occupies that inset).
+  `mainActivity_starts_withoutCrash` asserts `supportActionBar == null`.
+- **Icon / splash logo — the uploaded `vid.png` is now the real source.** The
+  adaptive icon's foreground pointed at a leftover 592-byte white-chevron
+  vector (`@drawable/ic_launcher_foreground`); it was deleted and every launcher
+  tile + adaptive foreground is regenerated from `incoming/vid.png` (art
+  centred, transparent adaptive foreground, `@color/ic_launcher_background`
+  behind it). The splash logo (`drawable-nodpi/vidmate_logo.png`) was flattened
+  onto white — now regenerated with a **transparent** background, plus a
+  `drawable-night-nodpi` variant whose ink is inverted so it reads on the dark
+  background. The typewriter splash (`TypewriterText`) and Compose splash were
+  already present and are unchanged.
+- **Prompt cleanup.** Removed the orphaned `nav_me` / `nav_explore`
+  destinations from the nav graph (prompt 22: Me is gone, Library lives in the
+  downloads/library page reached from the bell). No code referenced them.
+
+Suite is now **149 tests, 0 failures** (`:app:assembleDebug` green).
+
 ## Continuation (part 3, same session): the real ffmpeg-kit fix + a CI
 ## workflow bug that was making runs look inconsistent
 

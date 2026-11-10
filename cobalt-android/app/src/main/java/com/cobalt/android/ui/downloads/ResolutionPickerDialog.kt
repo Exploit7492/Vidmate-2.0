@@ -49,6 +49,14 @@ class ResolutionPickerDialog : BottomSheetDialogFragment() {
     private val binding get() = _binding!!
     private val viewModel: HomeViewModel by activityViewModels()
 
+    /**
+     * When present, this dialog resolves [ARG_URL] itself (via the shared
+     * [HomeViewModel]) instead of reading an already-resolved result. That is
+     * what lets the Shorts feed's download icon open this same quality picker
+     * without a Home screen being on screen to trigger the resolve first.
+     */
+    private val directUrl: String? get() = arguments?.getString(ARG_URL)
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
@@ -57,6 +65,28 @@ class ResolutionPickerDialog : BottomSheetDialogFragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        val url = directUrl
+        if (!url.isNullOrBlank()) {
+            // Resolve through the shared HomeViewModel and render whatever
+            // comes back — same resolver, same cache, same failure advice.
+            viewModel.resolveResult.observe(viewLifecycleOwner) { result ->
+                when (result) {
+                    is LinkResolverRepository.ResolveResult.Success -> showFormats(result)
+                    is LinkResolverRepository.ResolveResult.Error -> {
+                        android.widget.Toast.makeText(
+                            requireContext(),
+                            com.cobalt.android.link.ResolveFailureAdvisor.advise(result.message),
+                            android.widget.Toast.LENGTH_LONG
+                        ).show()
+                        dismiss()
+                    }
+                    else -> Unit
+                }
+            }
+            viewModel.setPendingUrl(url)
+            return
+        }
+
         val result = viewModel.resolveResult.value as? LinkResolverRepository.ResolveResult.Success
         if (result == null) {
             // Nothing to show (e.g. survived a process/config change without
@@ -64,7 +94,10 @@ class ResolutionPickerDialog : BottomSheetDialogFragment() {
             dismiss()
             return
         }
+        showFormats(result)
+    }
 
+    private fun showFormats(result: LinkResolverRepository.ResolveResult.Success) {
         val preference = SettingsRepository(requireContext()).defaultDownloadFormat
         val preferredLabel = when (preference) {
             SettingsRepository.DownloadFormatPreference.VIDEO -> "video"
@@ -139,6 +172,17 @@ class ResolutionPickerDialog : BottomSheetDialogFragment() {
 
     companion object {
         const val TAG = "ResolutionPickerDialog"
+        private const val ARG_URL = "resolve_url"
+
+        /** Legacy entry: reads the already-resolved result from [HomeViewModel]. */
         fun newInstance() = ResolutionPickerDialog()
+
+        /**
+         * Self-resolving entry: the dialog resolves [url] itself. Used by the
+         * Shorts feed's download icon, where no Home resolve has run.
+         */
+        fun newInstance(url: String) = ResolutionPickerDialog().apply {
+            arguments = Bundle().apply { putString(ARG_URL, url) }
+        }
     }
 }

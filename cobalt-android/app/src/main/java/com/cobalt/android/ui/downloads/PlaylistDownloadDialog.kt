@@ -28,6 +28,11 @@ class PlaylistDownloadDialog : DialogFragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        // A playlist search result opens this dialog with its URL pre-filled,
+        // so "download this playlist" is one tap rather than a copy-paste.
+        arguments?.getString(ARG_PREFILL)?.takeIf { it.isNotBlank() }?.let {
+            binding.etUrls.setText(it)
+        }
         binding.btnCancel.setOnClickListener { dismiss() }
         binding.btnStart.setOnClickListener {
             val text = binding.etUrls.text?.toString().orEmpty()
@@ -50,6 +55,13 @@ class PlaylistDownloadDialog : DialogFragment() {
 
     companion object {
         const val TAG = "PlaylistDownloadDialog"
+        private const val ARG_PREFILL = "prefill_urls"
+
         fun newInstance() = PlaylistDownloadDialog()
+
+        /** Opens the batch dialog with one or more URLs already filled in. */
+        fun newInstance(prefill: String) = PlaylistDownloadDialog().apply {
+            arguments = Bundle().apply { putString(ARG_PREFILL, prefill) }
+        }
     }
 }

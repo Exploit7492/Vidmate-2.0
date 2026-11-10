@@ -44,6 +44,13 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+            isReturnDefaultValues = true
+        }
+    }
+
     kotlinOptions { jvmTarget = "17" }
     buildFeatures {
         buildConfig = true
@@ -227,6 +234,10 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.6.0")
 
     testImplementation("junit:junit:4.13.2")
+    testImplementation("org.robolectric:robolectric:4.12.2")
+    testImplementation("androidx.test:core:1.5.0")
+    testImplementation("androidx.test.ext:junit:1.1.5")
+    testImplementation("androidx.fragment:fragment-testing:1.6.2")
     // Real org.json implementation for JVM unit tests: Android's bundled
     // org.json stubs throw "not mocked" off-device, and the feed parser
     // tests exercise real JSON parsing (not mocks — see the project's

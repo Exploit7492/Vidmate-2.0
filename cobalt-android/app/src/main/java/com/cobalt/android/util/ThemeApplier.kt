@@ -2,20 +2,18 @@ package com.cobalt.android.util
 
 import android.content.Context
 import androidx.appcompat.app.AppCompatDelegate
-import com.google.android.material.color.DynamicColors
 
 /**
- * Turns a persisted [SettingsRepository.ThemeMode] into real
- * `AppCompatDelegate`/`DynamicColors` calls. Shared by `CobaltApplication`
- * (applied once at process start, before any Activity exists) and the
- * Settings screen (applied immediately on change, then the activity
- * recreates).
+ * Turns a persisted [SettingsRepository.ThemeMode] into a real
+ * `AppCompatDelegate` night-mode call. Shared by `CobaltApplication` (applied
+ * once at process start, before any Activity exists) and the Settings screen
+ * (applied immediately on change, then the activity recreates).
  *
- * LIGHT and DARK are now genuinely distinct: `values/colors.xml` is the light
- * palette and `values-night/colors.xml` is the dark one, and `Theme.Cobalt`
- * extends `Theme.Material3.DayNight`, so the night-mode flag actually selects
- * a different resource set. DYNAMIC follows the system night mode and turns
- * on Material You re-tinting on API 31+.
+ * This deliberately does *not* call `DynamicColors.applyToActivitiesIfAvailable()`.
+ * Material You re-tinting layered on top of the app's own palette is what made
+ * some screens resolve to a system-tinted light scheme and others to the app's
+ * dark one; every surface now goes through `CobaltTheme`, and the night flag is
+ * the only input it needs.
  */
 object ThemeApplier {
     fun apply(context: Context, mode: SettingsRepository.ThemeMode) {
@@ -23,13 +21,8 @@ object ThemeApplier {
             when (mode) {
                 SettingsRepository.ThemeMode.LIGHT -> AppCompatDelegate.MODE_NIGHT_NO
                 SettingsRepository.ThemeMode.DARK -> AppCompatDelegate.MODE_NIGHT_YES
-                SettingsRepository.ThemeMode.DYNAMIC -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+                SettingsRepository.ThemeMode.SYSTEM -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
             }
         )
-        if (mode == SettingsRepository.ThemeMode.DYNAMIC) {
-            DynamicColors.applyToActivitiesIfAvailable(
-                context.applicationContext as android.app.Application
-            )
-        }
     }
 }

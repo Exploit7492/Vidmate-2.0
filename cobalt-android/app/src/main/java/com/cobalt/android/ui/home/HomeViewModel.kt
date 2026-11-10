@@ -35,6 +35,7 @@ import kotlinx.coroutines.launch
 class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     private val feedRepository = FeedRepository(application)
+    private val searchSource = com.cobalt.android.feed.source.InnertubeFeedSource()
     private val streamResolver = InnertubeStreamResolver()
     private val commentsRepository = com.cobalt.android.feed.comments.CommentsRepository()
     private val resolver = LinkResolverRepository(application)
@@ -64,6 +65,53 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     init {
         loadFeed()
+    }
+
+    // ── Header search (the dynamic field's free-text path) ───────────────────
+
+    private val _searchQuery = MutableLiveData<String?>(null)
+    val searchQuery: LiveData<String?> = _searchQuery
+
+    private val _searchResults = MutableLiveData(com.cobalt.android.feed.model.SearchResults.EMPTY)
+    val searchResults: LiveData<com.cobalt.android.feed.model.SearchResults> = _searchResults
+
+    private val _isSearching = MutableLiveData(false)
+    val isSearching: LiveData<Boolean> = _isSearching
+
+    /** Free-text search from the header. Results replace the feed surface. */
+    fun search(query: String) {
+        val q = query.trim()
+        if (q.isEmpty()) return
+        _searchQuery.value = q
+        viewModelScope.launch {
+            _isSearching.value = true
+            val results = searchSource.searchAll(q)
+            _searchResults.value = results.copy(videos = applyLanguageRule(results.videos))
+            _isSearching.value = false
+        }
+    }
+
+    /** Leaves search mode and returns to the recommendation feed. */
+    fun clearSearch() {
+        _searchQuery.value = null
+        _searchResults.value = com.cobalt.android.feed.model.SearchResults.EMPTY
+    }
+
+    /** A channel search result opens the channel screen (browse, not play). */
+    fun openChannel(url: String) {
+        _channelUrl.value = url
+    }
+
+    /** A playlist search result opens the playlist download flow. */
+    fun openPlaylist(url: String) {
+        _playlistUrl.value = url
+    }
+
+    private val _playlistUrl = MutableLiveData<String?>(null)
+    val playlistUrl: LiveData<String?> = _playlistUrl
+
+    fun onPlaylistOpened() {
+        _playlistUrl.value = null
     }
 
     fun loadFeed() {

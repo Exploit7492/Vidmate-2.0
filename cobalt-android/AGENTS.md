@@ -27,8 +27,12 @@ JDK 21 works with Gradle 8.7 + AGP 8.5.2 (do NOT downgrade to 17; 17 isn't in ap
 
 ## Project shape
 - Kotlin. Compose is now the primary UI toolkit. The app shell is a VidMate-style
-  four-tab bottom bar — Home / Library / Shorts / Me — with Settings reached from
-  the Me tab (not the bar), plus a floating download-queue FAB. New Compose screens
+  three-tab bottom bar — Home / Shorts / Settings — with the Shorts entry drawn
+  as a **floating rounded pill lifted above the bar** (circular accent flare
+  behind it); the bar's own middle slot is hidden so the pill is the only Shorts
+  affordance and its space keeps Home and Settings either side of it. See
+  `MainActivity.setupFloatingShortsTab` and `activity_main.xml`. There is also a
+  floating download-queue FAB. New Compose screens
   since Session 16: `ui/library/` (LibraryScreen/ViewModel/Fragment), `ui/me/`
   (MeScreen/ViewModel/Fragment), and a redesigned `ui/home/HomeScreen` (pill search
   bar + "Quick download" card + "Recommended" grid). `viewBinding` is still on
@@ -73,7 +77,7 @@ Landing zone for new surfaces (all verified BUILD SUCCESSFUL):
 
 Testing pattern that works well here: keep new logic pure and Android-free
 (e.g. `MediaSniffer`, `LocalMediaQuery`, `ResolveFailureAdvisor`) so it gets real
-JVM unit tests under `app/src/test/java/com/cobalt/android/`. Current suite: 140
+JVM unit tests under `app/src/test/java/com/cobalt/android/`. Current suite: 147
 tests, 0 failures. The newest batch covers the "use InnerTube fully" work and the
 recommender: `feed/explore/ExploreParserTest`, `feed/explore/PlaylistIdTest`,
 `recommend/TasteProfileTest`, plus the updated `UrlMatcherTest` (catch-all).
@@ -99,7 +103,7 @@ Zapier-codes credential is supplied, work stays local to this uploaded tree —
 do not assume a fetch/push target exists.
 
 ## VidMate-parity round (latest, all green)
-Everything below builds (`:app:assembleDebug`) and the suite passes (140 tests):
+Everything below builds (`:app:assembleDebug`) and the suite passes (147 tests):
 - Player: resume position store (`media/PlaybackPositionStore.kt`), gesture
   controls (`ui/PlayerGestureController.kt`: swipe-seek, edge brightness/volume),
   floating overlay player (`ui/FloatingPlayerWindow.kt`, gated on
@@ -128,3 +132,27 @@ Everything below builds (`:app:assembleDebug`) and the suite passes (140 tests):
 Keep the pure-logic-and-JVM-test pattern: `LanguageDetector`, `MusicGrouping`
 (injected id lookup), `StorageStats`, `PluginRegistry`, `ContentLanguageRule`,
 `WidgetPresenter` all have real tests, no Android framework needed.
+
+## Shorts drama rail + HLS download round (latest, all green)
+Everything builds (`:app:assembleDebug`) and the suite passes.
+- `shorts/source/DramaShortsSource.kt` — the "shorts drama" feed: an
+  aggregator over public, key-free catalogues, merged round-robin with each
+  provider independently failable and time-boxed. **Dailymotion** (public
+  search + player-metadata) is primary — it yields a real title, cover and
+  playable HLS `.m3u8` with no token. **iptv-org** category playlists are the
+  floor. DramaBox/DramaShorts/Shortical/FlickReels/shorts-drama.com are
+  best-effort (their catalogue is behind a bot wall or an authed API today, so
+  they usually no-op but contribute if one opens up). An item is only emitted
+  with a usable stream URL.
+- Wired into `shorts/ShortsFeedRepository.kt` as a fourth source alongside
+  Innertube/NewPipe/Invidious/PeerTube; it reuses the existing per-source
+  backoff, so a provider storm can't stall `loadMore()`.
+- Parsers are covered by `app/src/test/.../shorts/source/DramaShortsSourceTest.kt`
+  (`#EXTINF` playlists + generic JSON catalogue shapes), pure-JVM, no network.
+- HLS save path: `download/HlsDownloadEngine.kt` (fetch full playlist),
+  `transcode/HlsRemuxWorker.kt` (WorkManager remux `.ts` → container),
+  `download/DownloadService.kt` `ACTION_HLS`/`processHls`, and the Shorts save
+  action in `ui/shorts/ShortsViewModel.kt` + `ui/shorts/ShortsFragment.kt`.
+
+Keep the same pattern for new sources: pure parse functions in an `internal`
+companion, real JSON/playlist fixtures in tests, and no mocks.

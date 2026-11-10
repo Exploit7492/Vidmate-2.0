@@ -34,6 +34,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.cobalt.android.ui.common.DownloadBellIcon
 import com.cobalt.android.feed.model.FeedItem
 
 /**
@@ -136,6 +137,13 @@ private fun FeedTile(
                         .padding(horizontal = 4.dp, vertical = 1.dp)
                 )
             }
+            DownloadBellIcon(
+                isResolving = isResolving,
+                onClick = onDownload,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(6.dp)
+            )
         }
         Spacer(Modifier.height(6.dp))
         Text(
@@ -153,14 +161,6 @@ private fun FeedTile(
             fontSize = 11.sp,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
-        )
-        Text(
-            text = "download",
-            color = MaterialTheme.colorScheme.primary,
-            fontSize = 11.sp,
-            modifier = Modifier
-                .padding(top = 2.dp)
-                .clickable(onClick = onDownload)
         )
     }
 }

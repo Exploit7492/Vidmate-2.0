@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The floating Shorts tab: a rounded accent pill that sits a little above the
+  bottom bar so the bar reads as "behind" it. Solid (not translucent) so it
+  stays legible where it overlaps the bar. Ripple-wrapped for touch feedback.
+-->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="#33FFFFFF">
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="23dp" />
+            <gradient
+                android:angle="315"
+                android:startColor="@color/cobalt_accent_blue"
+                android:endColor="@color/cobalt_crescent" />
+        </shape>
+    </item>
+</ripple>

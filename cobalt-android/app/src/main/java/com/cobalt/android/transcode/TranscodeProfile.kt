@@ -139,6 +139,13 @@ sealed class TranscodeProfile {
         )
 
         /**
+         * The single tier [HlsRemuxWorker] uses to turn a concatenated MPEG-TS
+         * HLS download into an MP4 the gallery can index. Stream-copy only, so
+         * it costs seconds rather than a full re-encode.
+         */
+        val REMUX_MP4: Video = ALL_VIDEO.first { it.id == "v_remux" }
+
+        /**
          * The audio ladder. FLAC is lossless — there is no meaningful
          * "320" for it, that number only applies to lossy codecs, so it's
          * offered here as MP3/AAC at 320kbps instead of mislabeling FLAC

@@ -1,76 +1,92 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  VidMate-style app shell: a full-bleed content host with a flat, black
-  bottom navigation bar (blue selected item, no Material pill indicator) and
-  a floating download-queue button. The per-screen search bar lives inside
-  the Home composable, matching VidMate's per-tab chrome rather than a single
-  global toolbar.
+  App shell: a global header (dynamic search field + notification bell) that
+  is the single entry point for search / paste-a-link / browse, a full-bleed
+  content host, and a three-item bottom bar (Home / Shorts / Settings). There
+  is no static brand title; the search field is the title.
 -->
-<androidx.coordinatorlayout.widget.CoordinatorLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:clipChildren="false"
+    android:clipToPadding="false"
     android:background="@color/cobalt_background">
 
-    <fragment
+    <androidx.compose.ui.platform.ComposeView
+        android:id="@+id/headerBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <androidx.fragment.app.FragmentContainerView
         android:id="@+id/navHost"
         android:name="androidx.navigation.fragment.NavHostFragment"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         app:defaultNavHost="true"
         app:navGraph="@navigation/nav_graph"
         tools:layout="@layout/fragment_home" />
 
-    <!-- Floating download-queue entry point (VidMate keeps a persistent
-         download affordance on top of every tab). -->
+    <!--
+      The bottom bar plus the floating Shorts tab. The bar is the ordinary
+      three-slot strip; the Shorts pill is a separate, rounded accent button
+      lifted above the bar's top edge (negative margin + clipChildren=false)
+      so the bar reads as sitting behind it. A soft circular flare blooms
+      behind the pill's upper half. The bar's own middle slot keeps its id and
+      stays selectable (NavigationUI needs it) but draws a blank icon, so the
+      only visible Shorts affordance is the floating pill.
+    -->
     <FrameLayout
-        android:id="@+id/fabQueue"
-        android:layout_width="@dimen/fab_size"
-        android:layout_height="@dimen/fab_size"
-        android:layout_gravity="bottom|end"
-        android:layout_marginBottom="76dp"
-        android:layout_marginEnd="16dp"
-        android:background="@drawable/bg_fab"
-        android:clickable="true"
-        android:focusable="true"
-        android:elevation="6dp">
-
-        <ImageView
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:layout_gravity="center"
-            android:src="@drawable/ic_download"
-            android:contentDescription="@string/shortcut_open_queue" />
-
-        <TextView
-            android:id="@+id/tvBadge"
-            android:layout_width="16dp"
-            android:layout_height="16dp"
-            android:layout_gravity="top|end"
-            android:layout_marginTop="2dp"
-            android:layout_marginEnd="2dp"
-            android:background="@drawable/bg_badge"
-            android:gravity="center"
-            android:textColor="@android:color/white"
-            android:textSize="9sp"
-            android:visibility="gone"
-            android:fontFamily="@font/ibm_plex_mono_regular" />
-
-    </FrameLayout>
-
-    <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:id="@+id/navBottom"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        android:background="@color/cobalt_surface_sidebar"
-        app:elevation="0dp"
-        app:itemActiveIndicatorStyle="@null"
-        app:itemIconTint="@color/bottom_nav_item"
-        app:itemTextColor="@color/bottom_nav_item"
-        app:labelVisibilityMode="labeled"
-        app:menu="@menu/bottom_nav_menu" />
+        android:clipChildren="false"
+        android:clipToPadding="false">
 
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+        <com.google.android.material.bottomnavigation.BottomNavigationView
+            android:id="@+id/navBottom"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/cobalt_surface_sidebar"
+            android:fitsSystemWindows="true"
+            app:elevation="0dp"
+            app:itemActiveIndicatorStyle="@null"
+            app:itemIconTint="@color/bottom_nav_item"
+            app:itemTextColor="@color/bottom_nav_item"
+            app:labelVisibilityMode="labeled"
+            app:menu="@menu/bottom_nav_menu" />
+
+        <View
+            android:id="@+id/shortsFlare"
+            android:layout_width="62dp"
+            android:layout_height="62dp"
+            android:layout_gravity="center_horizontal|top"
+            android:layout_marginTop="-30dp"
+            android:background="@drawable/bg_shorts_flare"
+            android:importantForAccessibility="no" />
+
+        <FrameLayout
+            android:id="@+id/shortsTab"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="center_horizontal|top"
+            android:layout_marginTop="-22dp"
+            android:background="@drawable/bg_shorts_tab"
+            android:clickable="true"
+            android:contentDescription="@string/nav_shorts"
+            android:elevation="6dp"
+            android:focusable="true">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_gravity="center"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_nav_shorts"
+                app:tint="@color/cobalt_on_accent" />
+        </FrameLayout>
+    </FrameLayout>
+
+</LinearLayout>

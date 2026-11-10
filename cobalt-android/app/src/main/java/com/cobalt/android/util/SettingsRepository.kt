@@ -21,17 +21,15 @@ class SettingsRepository(context: Context) {
     enum class DownloadFormatPreference { ASK, VIDEO, AUDIO }
 
     /**
-     * Phase 12/13: single 3-way theme setting. LIGHT/DARK map straight to
-     * `AppCompatDelegate`'s night mode; DYNAMIC follows the system's
-     * light/dark setting *and* turns on Material You dynamic color via
-     * `DynamicColors.applyToActivitiesIfAvailable()` (API 31+; a no-op
-     * below that). See CobaltApplication for where this is read and
-     * ARCHITECTURE.md's Phase 13 entry for a known limitation: LIGHT
-     * currently looks identical to DARK, because `colors.xml` is a single
-     * hardcoded dark palette with no `values-night` counterpart — a
-     * pre-existing Phase 1 gap this phase surfaces but doesn't fix.
+     * Single 3-way theme setting. LIGHT and DARK pin one of the app's own
+     * palettes (ancient-blue glass / polished dark + gold + ruby); SYSTEM
+     * follows the device's light/dark setting. The app deliberately does not
+     * use Material You re-tinting: mixing dynamic colour with the app's own
+     * palette is what made some screens light and others dark. Every surface
+     * resolves through [com.cobalt.android.ui.theme.CobaltTheme], so the three
+     * values here are the only thing that decides light vs dark.
      */
-    enum class ThemeMode { LIGHT, DARK, DYNAMIC }
+    enum class ThemeMode { LIGHT, DARK, SYSTEM }
 
     /**
      * Internal cache only — NOT a user-facing setting anymore. Holds the
@@ -105,11 +103,11 @@ class SettingsRepository(context: Context) {
             prefs.edit().putString("download_location", cleaned).apply()
         }
 
-    /** See [ThemeMode] KDoc above. Defaults to DYNAMIC. */
+    /** See [ThemeMode] KDoc above. Defaults to SYSTEM. */
     var themeMode: ThemeMode
         get() = runCatching {
-            ThemeMode.valueOf(prefs.getString("theme_mode", ThemeMode.DYNAMIC.name) ?: ThemeMode.DYNAMIC.name)
-        }.getOrDefault(ThemeMode.DYNAMIC)
+            ThemeMode.valueOf(prefs.getString("theme_mode", ThemeMode.SYSTEM.name) ?: ThemeMode.SYSTEM.name)
+        }.getOrDefault(ThemeMode.SYSTEM)
         set(v) { prefs.edit().putString("theme_mode", v.name).apply() }
 
     /**

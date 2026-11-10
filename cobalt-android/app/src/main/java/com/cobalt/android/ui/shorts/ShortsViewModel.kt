@@ -131,13 +131,29 @@ class ShortsViewModel(application: Application) : AndroidViewModel(application) 
      * See ARCHITECTURE.md "Unified enhancement, NOT a parallel rebuild".
      */
     fun downloadToDevice(item: ShortItem) {
-        val extension = if (item.streamKind.name == "PROGRESSIVE") "mp4" else "m3u8"
+        // A drama/HLS item is a playlist of segments, so it goes through the
+        // manifest-aware path (every segment concatenated, then remuxed to MP4)
+        // and is named as the .mp4 it will become. Everything else is a single
+        // progressive file.
+        if (item.streamKind == com.cobalt.android.shorts.model.StreamKind.HLS) {
+            DownloadService.startHls(
+                ctx = getApplication(),
+                hlsUrl = item.streamUrl,
+                filename = "${sanitizeFilename(item.title)}_${item.videoId}.mp4",
+                mimeType = "video/mp4",
+                cookies = "",
+                userAgent = "",
+                originalUrl = item.watchUrl
+            )
+            return
+        }
+        val extension = "mp4"
         val filename = "${sanitizeFilename(item.title)}_${item.videoId}.$extension"
         DownloadService.startHttps(
             ctx = getApplication(),
             cobaltUrl = item.streamUrl,
             filename = filename,
-            mimeType = if (extension == "mp4") "video/mp4" else "application/vnd.apple.mpegurl",
+            mimeType = "video/mp4",
             cookies = "",
             userAgent = "",
             originalUrl = item.watchUrl

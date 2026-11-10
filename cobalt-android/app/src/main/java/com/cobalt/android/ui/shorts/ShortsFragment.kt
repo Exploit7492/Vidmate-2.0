@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
 import com.cobalt.android.R
 import com.cobalt.android.databinding.FragmentShortsBinding
+import com.cobalt.android.ui.downloads.ResolutionPickerDialog
 import com.cobalt.android.shorts.model.ShortItem
 import com.cobalt.android.shorts.model.StreamKind
 import com.cobalt.android.ui.widget.SkeletonPulse
@@ -54,7 +55,17 @@ class ShortsFragment : Fragment() {
 
         adapter = ShortsAdapter(
             onLikeClick = { viewModel.toggleLike(it) },
-            onSaveClick = { viewModel.downloadToDevice(it) },
+            onSaveClick = { item ->
+                // An HLS item (drama rail, PeerTube) already carries a
+                // playlist of segments we can pull directly, so it saves
+                // straight away; a progressive YouTube short still needs the
+                // resolver, so it opens the quality picker first.
+                if (item.streamKind == com.cobalt.android.shorts.model.StreamKind.HLS) {
+                    viewModel.downloadToDevice(item)
+                } else {
+                    openQualityPicker(item.watchUrl)
+                }
+            },
             onShareClick = { shareShort(it) }
         )
         binding.vpShorts.adapter = adapter
@@ -260,4 +271,17 @@ class ShortsFragment : Fragment() {
         skeletonAnimator = null
         _binding = null
     }
+
+    /**
+     * The Shorts download action opens the same quality-selection sheet the
+     * Home flow uses ([ResolutionPickerDialog] in self-resolving mode), so the
+     * user picks a quality/format instead of getting whichever stream the
+     * resolver happened to return first.
+     */
+    private fun openQualityPicker(watchUrl: String) {
+        if (childFragmentManager.findFragmentByTag(ResolutionPickerDialog.TAG) != null) return
+        ResolutionPickerDialog.newInstance(watchUrl)
+            .show(childFragmentManager, ResolutionPickerDialog.TAG)
+    }
+
 }

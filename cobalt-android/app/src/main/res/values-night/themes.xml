@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark override: status/navigation bars follow the polished-dark
+         background and use light icons (windowLightStatusBar=false). -->
+    <style name="Theme.Cobalt" parent="Theme.Material3.DayNight">
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+    </style>
+</resources>
